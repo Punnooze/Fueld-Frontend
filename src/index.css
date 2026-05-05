@@ -1,0 +1,80 @@
+:root {
+  --bg: #0a0a0a;
+  --surface: #141414;
+  --surface-2: #1a1a1a;
+  --border: #1f1f1f;
+  --accent: #c8f135;
+  --accent-dim: rgba(200, 241, 53, 0.10);
+  --accent-2: #5bc8d0;
+  --accent-2-dim: rgba(91, 200, 208, 0.12);
+  --danger: #ff4d4d;
+  --danger-dim: rgba(255, 77, 77, 0.12);
+  --text: #f0f0f0;
+  --text-muted: #666;
+  --text-soft: #999;
+  --radius-card: 16px;
+  --radius-input: 12px;
+  --nav-height: 60px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  max-width: 430px;
+  margin: 0 auto;
+  position: relative;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  background: none;
+}
+
+input, textarea {
+  font-family: inherit;
+  outline: none;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* Active states instead of hover */
+button:active, a:active {
+  opacity: 0.75;
+  transform: scale(0.97);
+  transition: transform 0.1s, opacity 0.1s;
+}
