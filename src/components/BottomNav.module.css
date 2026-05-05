@@ -7,8 +7,8 @@
   max-width: 430px;
   height: calc(var(--nav-height) + var(--safe-bottom));
   padding-bottom: var(--safe-bottom);
-  background: var(--surface);
-  border-top: 1px solid var(--border);
+  background: var(--bg-1);
+  border-top: 1px solid var(--line);
   display: flex;
   align-items: stretch;
   z-index: 100;
@@ -21,20 +21,37 @@
   align-items: center;
   justify-content: center;
   gap: 4px;
-  color: var(--text-muted);
+  color: var(--text-low);
   font-size: 10px;
   font-weight: 500;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  min-height: 48px;
-  transition: color 0.15s;
+  position: relative;
+  padding-top: 8px;
+  transition: color 180ms var(--ease-out);
 }
 
 .tab:active {
-  opacity: 0.6;
-  transform: scale(0.92);
+  opacity: 1;
+  transform: scale(1.08);
+  transition: transform 80ms;
 }
 
 .active {
   color: var(--accent);
+}
+
+.indicator {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.label {
+  line-height: 1;
 }

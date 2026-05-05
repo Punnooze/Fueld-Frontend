@@ -1,0 +1,39 @@
+{
+  "surfaces": {
+    "bg0": "#0A0B0A",
+    "bg1": "#131513",
+    "bg2": "#1B1E1B",
+    "bg3": "#262A26",
+    "line": "#2A2E2A",
+    "lineSoft": "#1F221F"
+  },
+  "text": {
+    "hi": "#F2F4EE",
+    "mid": "#9BA199",
+    "low": "#5C625B",
+    "dim": "#3A3E39"
+  },
+  "accent": {
+    "lime": "#C8F135",
+    "ink": "#0A1400",
+    "dim": "rgba(200,241,53,0.12)"
+  },
+  "macros": {
+    "protein": "#C8F135",
+    "carbs": "#F2C94C",
+    "fat": "#FF8A65"
+  },
+  "states": {
+    "danger": "#FF5A5F",
+    "success": "#6BD968"
+  },
+  "radius": {
+    "card": 18,
+    "inner": 12,
+    "pill": 999
+  },
+  "motion": {
+    "ease": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "dur": 180
+  }
+}

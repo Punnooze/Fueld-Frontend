@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 24" width="120" height="24">
+  
+  <g transform="translate(0 3) scale(0.281)">
+    <path d="M14 8 L52 8 L40 26 L46 26 L20 56 L28 34 L18 34 Z" fill="#C8F135"></path>
+  </g>
+  <text x="22" y="17" class="h" fill="#F2F4EE">FUEL</text>
+  <text x="22" y="17" class="h">
+    <tspan fill="#F2F4EE">FUEL</tspan><tspan fill="#C8F135">D</tspan>
+  </text>
+</svg>

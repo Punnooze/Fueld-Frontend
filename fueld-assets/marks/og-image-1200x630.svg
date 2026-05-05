@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  
+  <rect width="1200" height="630" fill="#0A0B0A"></rect>
+  
+  <g stroke="#131513" stroke-width="1">
+    <line x1="0" y1="105" x2="1200" y2="105"></line>
+    <line x1="0" y1="210" x2="1200" y2="210"></line>
+    <line x1="0" y1="315" x2="1200" y2="315"></line>
+    <line x1="0" y1="420" x2="1200" y2="420"></line>
+    <line x1="0" y1="525" x2="1200" y2="525"></line>
+  </g>
+  
+  <g transform="translate(72 72) scale(2)">
+    <path d="M14 8 L52 8 L40 26 L46 26 L20 56 L28 34 L18 34 Z" fill="#C8F135"></path>
+  </g>
+  <text x="220" y="142" class="h" fill="#F2F4EE">FUELD</text>
+  
+  <text x="72" y="430" class="num" fill="#C8F135">1580</text>
+  <text x="76" y="475" class="lab" fill="#9BA199">KCAL LEFT · OF 1700</text>
+  
+  <text x="1128" y="572" text-anchor="end" class="tag" fill="#9BA199">FUEL · TRAIN · MEASURE</text>
+</svg>

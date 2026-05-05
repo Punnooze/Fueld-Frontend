@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 360" width="360" height="360">
+  
+  <g transform="translate(108 40) scale(2.25)">
+    <path d="M14 8 L52 8 L40 26 L46 26 L20 56 L28 34 L18 34 Z" fill="#C8F135"></path>
+  </g>
+  <text x="180" y="262" text-anchor="middle" class="word" fill="#F2F4EE">FUEL</text>
+  <text x="180" y="262" text-anchor="middle" class="word">
+    <tspan fill="#F2F4EE">FUEL</tspan><tspan fill="#C8F135">D</tspan>
+  </text>
+  <text x="180" y="300" text-anchor="middle" class="tag" fill="#9BA199">FUEL · TRAIN · MEASURE</text>
+</svg>

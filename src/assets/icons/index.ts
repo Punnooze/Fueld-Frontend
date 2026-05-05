@@ -1,0 +1,43 @@
+// ── Nav ────────────────────────────────────────────────
+export { default as TodayIcon  } from './nav/today.svg?react'
+export { default as LogIcon    } from './nav/log.svg?react'
+export { default as MealsIcon  } from './nav/meals.svg?react'
+export { default as BodyIcon   } from './nav/body.svg?react'
+export { default as StatsIcon  } from './nav/stats.svg?react'
+
+// ── Action ─────────────────────────────────────────────
+export { default as BarcodeIcon   } from './action/barcode.svg?react'
+export { default as CalendarIcon  } from './action/calendar.svg?react'
+export { default as CheckIcon     } from './action/check.svg?react'
+export { default as ChevronDownIcon } from './action/chevron-down.svg?react'
+export { default as ChevronRightIcon } from './action/chevron-right.svg?react'
+export { default as CloseIcon     } from './action/close.svg?react'
+export { default as EditIcon      } from './action/edit.svg?react'
+export { default as FilterIcon    } from './action/filter.svg?react'
+export { default as InfoIcon      } from './action/info.svg?react'
+export { default as MinusIcon     } from './action/minus.svg?react'
+export { default as MoreIcon      } from './action/more.svg?react'
+export { default as PlusIcon      } from './action/plus.svg?react'
+export { default as RefreshIcon   } from './action/refresh.svg?react'
+export { default as SearchIcon    } from './action/search.svg?react'
+export { default as SettingsIcon  } from './action/settings.svg?react'
+export { default as ShareIcon     } from './action/share.svg?react'
+export { default as TrashIcon     } from './action/trash.svg?react'
+
+// ── Domain ─────────────────────────────────────────────
+export { default as DumbbellIcon  } from './domain/dumbbell.svg?react'
+export { default as FlameIcon     } from './domain/flame.svg?react'
+export { default as FootprintIcon } from './domain/footprint.svg?react'
+export { default as ForkIcon      } from './domain/fork.svg?react'
+export { default as HeartIcon     } from './domain/heart.svg?react'
+export { default as LeafIcon      } from './domain/leaf.svg?react'
+export { default as ScaleIcon     } from './domain/scale.svg?react'
+export { default as StreakIcon    } from './domain/streak.svg?react'
+export { default as TrophyIcon    } from './domain/trophy.svg?react'
+export { default as WaterIcon     } from './domain/water.svg?react'
+
+// ── Macro dots (colored fills — do not recolor) ────────
+export { default as KcalDotIcon    } from './macro/kcal.svg?react'
+export { default as ProteinDotIcon } from './macro/protein.svg?react'
+export { default as CarbsDotIcon   } from './macro/carbs.svg?react'
+export { default as FatDotIcon     } from './macro/fat.svg?react'

@@ -1,53 +1,51 @@
-.page {
-  padding: 0 0 calc(var(--nav-height) + var(--safe-bottom) + 16px);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.header {
-  padding: 56px 20px 16px;
-}
-
-.title {
-  font-size: 26px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-}
-
 .searchWrap {
   position: relative;
-  margin: 0 16px 12px;
+  display: flex;
+  align-items: center;
+  margin: 0 var(--page-x) 10px;
 }
 
 .searchIcon {
   position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-muted);
+  left: 16px;
+  color: var(--text-mid);
   display: flex;
   align-items: center;
   pointer-events: none;
+  z-index: 1;
 }
 
 .searchInput {
-  width: 100%;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-input);
-  color: var(--text);
-  font-size: 16px;
-  padding: 13px 14px 13px 42px;
-  min-height: 48px;
+  height: 56px;
+  padding: 0 52px 0 46px;
+  border-radius: 14px;
+  background: var(--bg-2);
+  font-size: 15px;
 }
 
-.searchInput::placeholder { color: var(--text-muted); }
-.searchInput:focus { border-color: var(--accent); }
+.barcodeBtn {
+  position: absolute;
+  right: 8px;
+  width: 40px;
+  height: 40px;
+  background: var(--bg-3);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-mid);
+}
+
+.chipStrip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 var(--page-x) 12px;
+  overflow-x: auto;
+}
 
 .foodList {
-  flex: 1;
-  padding: 0 16px;
+  padding: 0 var(--page-x);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -55,230 +53,35 @@
 
 .foodRow {
   width: 100%;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-card);
-  padding: 14px 16px;
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+  border-radius: 14px;
+  padding: 14px 14px 14px 16px;
   display: flex;
   align-items: center;
   gap: 12px;
   text-align: left;
-  min-height: 64px;
+  min-height: 72px;
+  transition: background var(--dur) var(--ease);
 }
 
-.foodRow:active { transform: scale(0.98); opacity: 0.85; }
+.foodRow:active { background: var(--bg-2) !important; filter: none; transform: none; }
 
-.foodRowSelected {
-  border-color: var(--accent);
-  background: var(--accent-dim);
-}
-
-.foodInfo {
-  flex: 1;
+.addCircle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
   display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-}
-
-.foodName {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.foodMeta {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.check {
-  color: var(--accent);
-  font-size: 16px;
-  font-weight: 700;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
-.noResults {
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 14px;
-  padding: 32px 0;
-}
-
-.group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.groupLabel {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--accent);
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  padding: 4px 0 2px;
-}
-
-.groupLabelItem {
-  color: var(--accent-2);
-  margin-top: 8px;
-}
-
-/* Bottom sheet content */
-.sheetBody {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.sheetFoodName {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.sheetLabel {
-  font-size: 13px;
-  color: var(--text-muted);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.quantityInput {
-  width: 100%;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-input);
-  color: var(--text);
-  font-size: 32px;
-  font-weight: 700;
-  padding: 14px 16px;
-  text-align: center;
-  min-height: 64px;
-}
-
-.quantityInput:focus { border-color: var(--accent); }
-
-.quickAmounts {
-  display: flex;
-  gap: 8px;
-}
-
-.quickBtn {
-  flex: 1;
-  height: 44px;
-  border-radius: 10px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  color: var(--text-soft);
-  font-size: 15px;
-  font-weight: 600;
-  font-family: inherit;
-}
-
-.quickBtn:active { opacity: 0.7; transform: scale(0.94); }
-
-.quickBtnActive {
-  border-color: var(--accent);
-  background: var(--accent-dim);
-  color: var(--accent);
-}
-
-.preview {
-  text-align: center;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--accent);
-  background: var(--accent-dim);
-  border-radius: 10px;
-  padding: 10px;
-}
-
-.noteInput {
-  width: 100%;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-input);
-  color: var(--text);
-  font-size: 14px;
-  padding: 12px 14px;
-  font-family: inherit;
-}
-
-.noteInput::placeholder { color: var(--text-muted); }
-.noteInput:focus { border-color: var(--accent); }
-
-.dateRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.dateLabel {
-  font-size: 14px;
-  color: var(--text-muted);
-  font-weight: 500;
-}
-
-.dateInput {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-input);
-  color: var(--text);
-  font-size: 14px;
-  padding: 10px 12px;
-  font-family: inherit;
-  color-scheme: dark;
-}
-
-.dateInput:focus { border-color: var(--accent); }
-
-.addBtn {
-  width: 100%;
-  height: 54px;
-  border-radius: var(--radius-card);
-  background: var(--accent);
-  color: #0a0a0a;
-  font-size: 16px;
-  font-weight: 700;
-  font-family: inherit;
-  letter-spacing: 0.01em;
-  margin-top: 4px;
-}
-
-.addBtn:active { transform: scale(0.97); opacity: 0.85; }
-.addBtn:disabled { opacity: 0.5; }
-
-.skeleton {
-  padding: 0 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.skeletonRow {
-  height: 64px;
-  border-radius: var(--radius-card);
-  background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 50%, var(--surface) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-.error {
-  font-size: 14px;
-  color: var(--danger);
-  padding: 16px;
-  text-align: center;
+.quickActive {
+  border-color: var(--accent) !important;
+  background: var(--accent-dim) !important;
+  color: var(--accent) !important;
 }

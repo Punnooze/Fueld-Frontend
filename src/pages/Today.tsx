@@ -1,33 +1,46 @@
 import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import { useLogs, useDeleteLog } from '../hooks/useLogs'
 import { useStreak } from '../hooks/useStreak'
 import { useTargets } from '../hooks/useSettings'
 import { MacroBar } from '../components/MacroBar'
+import { RingProgress } from '../components/RingProgress'
+import { FAB } from '../components/FAB'
 import { SettingsModal } from '../components/SettingsModal'
 import { useToast } from '../components/Toast'
+import { Card } from '../components/ui/Card'
+import { Eyebrow } from '../components/ui/Eyebrow'
+import { MetricNumber } from '../components/ui/MetricNumber'
+import { SettingsIcon, MoreIcon, TrashIcon, StreakIcon } from '../assets/icons'
 import { sumMacros } from '../utils/macros'
-import { today } from '../utils/dates'
+import { today, formatDate } from '../utils/dates'
+import { getLogHistory } from '../api/logs'
+import LogoHeader from '../assets/brand/logo-header.svg?react'
+import EmptyLog from '../assets/illustrations/empty-log.svg?react'
 import styles from './Today.module.css'
 
-const TrashIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="3 6 5 6 21 6"/>
-    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-    <path d="M10 11v6M14 11v6M9 6V4h6v2"/>
-  </svg>
-)
+const DAY_LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
 
-const GearIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="3"/>
-    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-  </svg>
-)
+function getWeekDays(): Date[] {
+  const now = new Date()
+  const dow = now.getDay()
+  const mondayOffset = dow === 0 ? -6 : 1 - dow
+  const monday = new Date(now)
+  monday.setDate(now.getDate() + mondayOffset)
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday)
+    d.setDate(monday.getDate() + i)
+    return d
+  })
+}
 
 export const Today = () => {
   const date = today()
+  const navigate = useNavigate()
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [openRowId, setOpenRowId]       = useState<string | null>(null)
+  const [deletingId, setDeletingId]     = useState<string | null>(null)
 
   const { data: logs = [], isLoading, isError } = useLogs(date)
   const deleteLog = useDeleteLog(date)
@@ -35,8 +48,21 @@ export const Today = () => {
   const targets = useTargets()
   const { showToast } = useToast()
 
-  const totals = sumMacros(logs)
+  const weekDays = getWeekDays()
+  const todayStr = formatDate(new Date())
+  const weekStart = formatDate(weekDays[0])
+  const weekEnd   = formatDate(weekDays[6])
+
+  const { data: weekHistory = [] } = useQuery({
+    queryKey: ['logs', 'history', weekStart, weekEnd],
+    queryFn: () => getLogHistory(weekStart, weekEnd),
+  })
+  const daysWithLogs = new Set(weekHistory.map(e => e.date))
+
+  const totals    = sumMacros(logs)
   const remaining = targets.calories - totals.calories
+  const progress  = Math.min(totals.calories / targets.calories, 1)
+  const isOver    = remaining < 0
 
   const handleDelete = async (id: string) => {
     setDeletingId(id)
@@ -47,87 +73,151 @@ export const Today = () => {
       showToast('Failed to delete', 'error')
     } finally {
       setDeletingId(null)
+      setOpenRowId(null)
     }
   }
 
+  const dateLabel = new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+
   return (
-    <div className={styles.page}>
+    <div className={`page ${styles.page}`}>
+
+      {/* ── Header ── */}
       <header className={styles.header}>
-        <span className={styles.logo}>FUELD</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span className={styles.dateLabel}>
-            {new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
-          </span>
-          <button className={styles.gearBtn} onClick={() => setSettingsOpen(true)} aria-label="Settings">
-            <GearIcon />
+        <LogoHeader width={120} height={24} />
+        <div className="row gap-10">
+          <span className="t-meta">{dateLabel}</span>
+          <button className="btn-icon" onClick={() => setSettingsOpen(true)} aria-label="Settings">
+            <SettingsIcon width={20} height={20} />
           </button>
         </div>
       </header>
 
-      <div className={styles.summaryCard}>
-        <div className={styles.calSection}>
-          <span className={styles.remainingNum} style={{ color: remaining < 0 ? 'var(--danger)' : 'var(--accent)' }}>
-            {Math.abs(Math.round(remaining))}
-          </span>
-          <span className={styles.remainingLabel}>
-            {remaining < 0 ? 'over target' : 'kcal left'}
-            <span className={styles.target}> · of {targets.calories} kcal</span>
-          </span>
-        </div>
-
-        <div className={styles.macros}>
-          <MacroBar label="Protein" current={totals.protein} target={targets.protein} />
-          <MacroBar label="Carbs"   current={totals.carbs}   target={targets.carbs}   />
-          <MacroBar label="Fat"     current={totals.fat}     target={targets.fat}     />
-        </div>
-
-        {streak > 0 && (
-          <div className={styles.streak}>
-            🔥 <span>{streak} day streak</span>
-          </div>
-        )}
+      {/* ── Week strip ── */}
+      <div className={styles.weekStrip}>
+        {weekDays.map((d, i) => {
+          const ds      = formatDate(d)
+          const isToday = ds === todayStr
+          const isPast  = d < new Date() && !isToday
+          const hasLog  = daysWithLogs.has(ds)
+          return (
+            <div key={i} className={`${styles.dayTile} ${isToday ? styles.dayToday : ''}`}>
+              <span className={styles.dayLetter}>{DAY_LETTERS[i]}</span>
+              <span className={styles.dayNum}>{d.getDate()}</span>
+              {isPast && hasLog && <span className={styles.dayDot} />}
+            </div>
+          )
+        })}
       </div>
 
-      <section className={styles.logSection}>
-        <h2 className={styles.sectionTitle}>Today's Log</h2>
+      {/* ── Calorie hero card ── */}
+      <div className="px">
+        <Card padding={24} style={{ alignItems: 'center', display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <RingProgress
+            progress={progress}
+            size={220}
+            strokeWidth={8}
+            color={isOver ? 'var(--danger)' : 'var(--accent)'}
+          >
+            <div className="stack gap-4" style={{ alignItems: 'center' }}>
+              <MetricNumber size="xl" color={isOver ? 'var(--danger)' : 'var(--accent)'}>
+                {Math.abs(Math.round(remaining))}
+              </MetricNumber>
+              <span className="t-eyebrow">{isOver ? 'Over Target' : 'Kcal Left'}</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-low)' }}>
+                {Math.round(totals.calories)} / {targets.calories} kcal
+              </span>
+            </div>
+          </RingProgress>
 
-        {isLoading ? (
-          <div className={styles.skeleton}>
-            {[1, 2, 3].map(i => <div key={i} className={styles.skeletonRow} />)}
+          <div className="row gap-16" style={{ width: '100%' }}>
+            <MacroBar label="Protein" current={totals.protein} target={targets.protein} color="var(--protein)" />
+            <MacroBar label="Carbs"   current={totals.carbs}   target={targets.carbs}   color="var(--carbs)"   />
+            <MacroBar label="Fat"     current={totals.fat}     target={targets.fat}     color="var(--fat)"     />
           </div>
-        ) : isError ? (
-          <p className={styles.error}>Failed to load log entries.</p>
-        ) : logs.length === 0 ? (
-          <div className={styles.empty}>
-            <span className={styles.emptyIcon}>🥗</span>
-            <p>Nothing logged yet.</p>
-            <p className={styles.emptyHint}>Hit + to add your first meal.</p>
+        </Card>
+      </div>
+
+      {/* ── Streak tile ── */}
+      {streak > 0 && (
+        <div className="px" style={{ marginTop: 10 }}>
+          <Card padding={12}>
+            <div className="row gap-8">
+              <StreakIcon width={18} height={18} style={{ color: 'var(--accent)' }} />
+              <MetricNumber size="sm" color="var(--text-hi)">{streak}</MetricNumber>
+              <span className="t-meta">day streak</span>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* ── Today's log ── */}
+      <section className={styles.logSection}>
+        <Eyebrow right={logs.length > 0 ? `${logs.length} items · ${Math.round(totals.calories)} kcal` : undefined}>
+          Today's Log
+        </Eyebrow>
+
+        {isLoading && (
+          <div className="stack gap-8">
+            {[1, 2, 3].map(i => <div key={i} className="skeleton-row" style={{ height: 64 }} />)}
           </div>
-        ) : (
-          <div className={styles.logList}>
+        )}
+
+        {isError && <p style={{ color: 'var(--danger)', fontSize: 14, padding: '16px 0' }}>Failed to load entries.</p>}
+
+        {!isLoading && !isError && logs.length === 0 && (
+          <div className="empty-state">
+            <EmptyLog width={200} height={200} />
+            <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-mid)' }}>No fuel logged yet</p>
+            <p className="t-meta">Tap + to log your first meal</p>
+          </div>
+        )}
+
+        {!isLoading && !isError && logs.length > 0 && (
+          <div className="stack gap-8">
             {logs.map(entry => (
-              <div key={entry.id} className={styles.logRow}>
-                <div className={styles.logInfo}>
-                  <span className={styles.logName}>{entry.foodName}</span>
-                  {entry.note && <span className={styles.logNote}>{entry.note}</span>}
-                  <span className={styles.logMeta}>
-                    ×{entry.quantity} · {Math.round(entry.calories)} kcal · {Math.round(entry.protein)}g protein
+              <Card key={entry.id} padding={0} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 12px 12px 14px', minHeight: 64 }}>
+                {/* Left tile */}
+                <div style={{ width: 40, height: 40, background: 'var(--bg-2)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <RingProgress progress={entry.calories / targets.calories} size={32} strokeWidth={3}>
+                    <span style={{ fontSize: 7, fontFamily: 'var(--font-mono)', color: 'var(--text-low)' }}>
+                      {Math.round(Math.min(entry.calories / targets.calories, 1) * 100)}
+                    </span>
+                  </RingProgress>
+                </div>
+
+                {/* Info */}
+                <div className="stack gap-3 flex-1 min-w-0">
+                  <span style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {entry.foodName}
+                  </span>
+                  <span className="t-micro" style={{ color: 'var(--text-low)' }}>
+                    ×{entry.quantity} · {Math.round(entry.calories)} kcal · {Math.round(entry.protein)}g P
+                    {entry.note && <em style={{ fontStyle: 'normal', color: 'var(--text-mid)' }}> · {entry.note}</em>}
                   </span>
                 </div>
-                <button
-                  className={styles.logDelete}
-                  onClick={() => handleDelete(entry.id)}
-                  disabled={deletingId === entry.id}
-                  aria-label={`Delete ${entry.foodName}`}
-                >
-                  <TrashIcon />
-                </button>
-              </div>
+
+                {/* Actions */}
+                {openRowId === entry.id ? (
+                  <button
+                    className="btn-danger"
+                    onClick={() => handleDelete(entry.id)}
+                    disabled={deletingId === entry.id}
+                  >
+                    <TrashIcon width={14} height={14} />
+                  </button>
+                ) : (
+                  <button className="btn-icon" onClick={() => setOpenRowId(entry.id)}>
+                    <MoreIcon width={16} height={16} />
+                  </button>
+                )}
+              </Card>
             ))}
           </div>
         )}
       </section>
 
+      <FAB onClick={() => navigate('/log')} label="Log food" />
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   )

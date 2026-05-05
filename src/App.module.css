@@ -5,9 +5,7 @@
   position: relative;
 }
 
-.main {
-  flex: 1;
-}
+.main { flex: 1; }
 
 .banner {
   position: fixed;
@@ -18,15 +16,14 @@
   max-width: 430px;
   z-index: 500;
   text-align: center;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  padding: 6px 12px;
-  padding-top: calc(6px + env(safe-area-inset-top, 0px));
-  background: #1a1a1a;
-  color: var(--text-muted);
-  border-bottom: 1px solid var(--border);
+  padding: calc(6px + var(--safe-top)) 12px 6px;
+  background: var(--bg-1);
+  color: var(--text-low);
+  border-bottom: 1px solid var(--line);
   transition: background 0.3s, color 0.3s;
 }
 

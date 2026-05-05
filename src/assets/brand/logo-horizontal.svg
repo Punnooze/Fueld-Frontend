@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 120" width="520" height="120">
+  
+  
+  <g transform="translate(20 12) scale(1.5)">
+    <path d="M14 8 L52 8 L40 26 L46 26 L20 56 L28 34 L18 34 Z" fill="#C8F135"></path>
+  </g>
+  
+  <line x1="140" y1="28" x2="140" y2="92" stroke="#2A2E2A" stroke-width="1"></line>
+  
+  <text x="168" y="78" class="fuel" fill="#F2F4EE">FUEL</text>
+  <text x="416" y="78" class="fuel" fill="#C8F135">D</text>
+</svg>

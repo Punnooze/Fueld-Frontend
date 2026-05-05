@@ -2,22 +2,41 @@ import { useState } from 'react'
 import { useFoods, useCreateFood, useUpdateFood, useDeleteFood } from '../hooks/useFoods'
 import { FoodCard } from '../components/FoodCard'
 import { BottomSheet } from '../components/BottomSheet'
+import { SegmentedControl } from '../components/SegmentedControl'
+import { FAB } from '../components/FAB'
+import { Eyebrow } from '../components/ui/Eyebrow'
 import { useToast } from '../components/Toast'
+import EmptyMeals from '../assets/illustrations/empty-meals.svg?react'
 import type { FoodItem } from '../api/foods'
-import styles from './Foods.module.css'
 
-interface FormState {
-  name: string
-  calories: string
-  protein: string
-  carbs: string
-  fat: string
-}
-
+interface FormState { name: string; calories: string; protein: string; carbs: string; fat: string }
 const EMPTY_FORM: FormState = { name: '', calories: '', protein: '', carbs: '', fat: '' }
-
 type Tab = 'meal' | 'item'
 type SheetMode = { mode: 'add' } | { mode: 'edit'; food: FoodItem }
+
+const TABS = [
+  { value: 'meal', label: 'Meals' },
+  { value: 'item', label: 'Food Items' },
+]
+
+const FormField = ({
+  label, value, error, onChange, inputProps,
+}: {
+  label: string; value: string; error?: string;
+  onChange: (v: string) => void;
+  inputProps?: React.InputHTMLAttributes<HTMLInputElement>
+}) => (
+  <div className="stack gap-5">
+    <label className="t-eyebrow">{label}</label>
+    <input
+      className={`input ${error ? 'input-error' : ''}`}
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      {...inputProps}
+    />
+    {error && <span style={{ fontSize: 11, color: 'var(--danger)' }}>{error}</span>}
+  </div>
+)
 
 export const Foods = () => {
   const { data: foods = [], isLoading, isError } = useFoods()
@@ -27,46 +46,26 @@ export const Foods = () => {
   const { showToast } = useToast()
 
   const [activeTab, setActiveTab] = useState<Tab>('meal')
-  const [sheet, setSheet] = useState<SheetMode | null>(null)
-  const [form, setForm] = useState<FormState>(EMPTY_FORM)
-  const [errors, setErrors] = useState<Partial<FormState>>({})
+  const [sheet, setSheet]         = useState<SheetMode | null>(null)
+  const [form, setForm]           = useState<FormState>(EMPTY_FORM)
+  const [errors, setErrors]       = useState<Partial<FormState>>({})
 
-  const mealsCustom = foods.filter(f => f.isCustom && f.type === 'meal')
-  const mealsLibrary = foods.filter(f => !f.isCustom && f.type === 'meal')
-  const itemsCustom = foods.filter(f => f.isCustom && f.type === 'item')
-  const itemsLibrary = foods.filter(f => !f.isCustom && f.type === 'item')
+  const custom  = foods.filter(f => f.isCustom  && f.type === activeTab)
+  const library = foods.filter(f => !f.isCustom && f.type === activeTab)
+  const isEmpty = !isLoading && !isError && custom.length === 0 && library.length === 0
 
-  const activeCustom = activeTab === 'meal' ? mealsCustom : itemsCustom
-  const activeLibrary = activeTab === 'meal' ? mealsLibrary : itemsLibrary
-  const isEmpty = !isLoading && !isError && activeCustom.length === 0 && activeLibrary.length === 0
-
-  const openAdd = () => {
-    setForm(EMPTY_FORM)
-    setErrors({})
-    setSheet({ mode: 'add' })
-  }
-
+  const openAdd  = () => { setForm(EMPTY_FORM); setErrors({}); setSheet({ mode: 'add' }) }
   const openEdit = (food: FoodItem) => {
-    setForm({
-      name: food.name,
-      calories: String(food.calories),
-      protein: String(food.protein),
-      carbs: String(food.carbs),
-      fat: String(food.fat),
-    })
+    setForm({ name: food.name, calories: String(food.calories), protein: String(food.protein), carbs: String(food.carbs), fat: String(food.fat) })
     setErrors({})
     setSheet({ mode: 'edit', food })
   }
 
-  const closeSheet = () => setSheet(null)
-
-  const validate = (): boolean => {
+  const validate = () => {
     const errs: Partial<FormState> = {}
-    if (!form.name.trim()) errs.name = 'Name is required'
-    const nums: (keyof FormState)[] = ['calories', 'protein', 'carbs', 'fat']
-    for (const k of nums) {
-      const v = parseFloat(form[k])
-      if (isNaN(v) || v < 0) errs[k] = '≥ 0'
+    if (!form.name.trim()) errs.name = 'Required'
+    for (const k of ['calories', 'protein', 'carbs', 'fat'] as const) {
+      if (isNaN(parseFloat(form[k])) || parseFloat(form[k]) < 0) errs[k] = '≥ 0'
     }
     setErrors(errs)
     return Object.keys(errs).length === 0
@@ -74,135 +73,99 @@ export const Foods = () => {
 
   const handleSubmit = async () => {
     if (!validate()) return
-    const payload = {
-      name: form.name.trim(),
-      calories: parseFloat(form.calories),
-      protein: parseFloat(form.protein),
-      carbs: parseFloat(form.carbs),
-      fat: parseFloat(form.fat),
-      type: activeTab,
-    }
+    const payload = { name: form.name.trim(), calories: parseFloat(form.calories), protein: parseFloat(form.protein), carbs: parseFloat(form.carbs), fat: parseFloat(form.fat), type: activeTab }
     try {
-      if (sheet?.mode === 'edit') {
-        await updateFood.mutateAsync({ id: sheet.food.id, payload })
-        showToast('Updated!')
-      } else {
-        await createFood.mutateAsync(payload)
-        showToast(activeTab === 'meal' ? 'Meal added!' : 'Food item added!')
-      }
-      closeSheet()
-    } catch {
-      showToast('Failed to save', 'error')
-    }
+      if (sheet?.mode === 'edit') { await updateFood.mutateAsync({ id: sheet.food.id, payload }); showToast('Updated!') }
+      else { await createFood.mutateAsync(payload); showToast(activeTab === 'meal' ? 'Meal added!' : 'Item added!') }
+      setSheet(null)
+    } catch { showToast('Failed to save', 'error') }
   }
 
   const handleDelete = async (id: string) => {
-    try {
-      await deleteFood.mutateAsync(id)
-      showToast('Deleted')
-    } catch {
-      showToast('Failed to delete', 'error')
-    }
+    try { await deleteFood.mutateAsync(id); showToast('Deleted') }
+    catch { showToast('Failed to delete', 'error') }
   }
 
-  const isPending = createFood.isPending || updateFood.isPending
-  const sheetTitle = sheet?.mode === 'edit'
-    ? `Edit ${activeTab === 'meal' ? 'Meal' : 'Food Item'}`
-    : `Add ${activeTab === 'meal' ? 'Meal' : 'Food Item'}`
-
-  const field = (key: keyof FormState, label: string, inputProps?: React.InputHTMLAttributes<HTMLInputElement>) => (
-    <div key={key} className={styles.fieldWrap}>
-      <label className={styles.fieldLabel}>{label}</label>
-      <input
-        className={`${styles.fieldInput} ${errors[key] ? styles.fieldError : ''}`}
-        value={form[key]}
-        onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-        {...inputProps}
-      />
-      {errors[key] && <span className={styles.errorMsg}>{errors[key]}</span>}
-    </div>
-  )
-
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
-        <h1 className={styles.title}>Meals</h1>
+    <div className="page">
+      <header className="page-header">
+        <h1 className="t-h1">Meals</h1>
       </header>
 
-      <div className={styles.tabs}>
-        <button
-          className={`${styles.tab} ${activeTab === 'meal' ? styles.tabMealActive : ''}`}
-          onClick={() => setActiveTab('meal')}
-        >
-          Meals
-        </button>
-        <button
-          className={`${styles.tab} ${activeTab === 'item' ? styles.tabItemActive : ''}`}
-          onClick={() => setActiveTab('item')}
-        >
-          Food Items
-        </button>
+      <div style={{ padding: '0 var(--page-x) 16px' }}>
+        <SegmentedControl options={TABS} value={activeTab} onChange={v => setActiveTab(v as Tab)} />
       </div>
 
       {isLoading && (
-        <div className={styles.skeleton}>
-          {[1, 2, 3].map(i => <div key={i} className={styles.skeletonRow} />)}
+        <div className="stack gap-8 px">
+          {[1, 2, 3].map(i => <div key={i} className="skeleton-row" style={{ height: 68 }} />)}
         </div>
       )}
 
-      {isError && <p className={styles.error}>Failed to load.</p>}
+      {isError && <p style={{ color: 'var(--danger)', fontSize: 14, padding: 16, textAlign: 'center' }}>Failed to load.</p>}
 
       {isEmpty && (
-        <div className={styles.empty}>
-          <p>No {activeTab === 'meal' ? 'meals' : 'food items'} yet.</p>
-          <p className={styles.emptyHint}>Tap + to add one.</p>
+        <div className="empty-state">
+          <EmptyMeals width={200} height={200} />
+          <p style={{ fontSize: 20, fontWeight: 700, fontFamily: 'var(--font-display)', color: 'var(--text-hi)' }}>
+            {activeTab === 'meal' ? 'Build your first meal' : 'Add your first food item'}
+          </p>
+          <p className="t-meta" style={{ maxWidth: 280 }}>
+            {activeTab === 'meal'
+              ? 'Combine food items you eat together — log them in one tap later.'
+              : 'Add ingredients and snacks to your personal library.'}
+          </p>
+          <button className="btn-primary" style={{ width: 'auto', padding: '0 28px', borderRadius: 'var(--r-pill)' }} onClick={openAdd}>
+            {activeTab === 'meal' ? 'Create meal' : 'Add food item'}
+          </button>
         </div>
       )}
 
-      {!isLoading && !isError && (
-        <div className={styles.content}>
-          {activeCustom.length > 0 && (
-            <section className={styles.section}>
-              <h2 className={styles.sectionLabel}>Your Custom {activeTab === 'meal' ? 'Meals' : 'Food Items'}</h2>
-              <div className={styles.list}>
-                {activeCustom.map(f => (
-                  <FoodCard key={f.id} food={f} onEdit={openEdit} onDelete={handleDelete} />
-                ))}
+      {!isLoading && !isError && !isEmpty && (
+        <div className="stack" style={{ padding: '0 var(--page-x)', gap: 24 }}>
+          {custom.length > 0 && (
+            <div>
+              <Eyebrow>Your {activeTab === 'meal' ? 'Meals' : 'Food Items'}</Eyebrow>
+              <div className="stack gap-6">
+                {custom.map(f => <FoodCard key={f.id} food={f} onEdit={openEdit} onDelete={handleDelete} />)}
               </div>
-            </section>
+            </div>
           )}
-
-          {activeLibrary.length > 0 && (
-            <section className={styles.section}>
-              <h2 className={styles.sectionLabel}>Library</h2>
-              <div className={styles.list}>
-                {activeLibrary.map(f => (
-                  <FoodCard key={f.id} food={f} />
-                ))}
+          {library.length > 0 && (
+            <div>
+              <Eyebrow>Library</Eyebrow>
+              <div className="stack gap-6">
+                {library.map(f => <FoodCard key={f.id} food={f} />)}
               </div>
-            </section>
+            </div>
           )}
         </div>
       )}
 
-      <button className={`${styles.fab} ${activeTab === 'item' ? styles.fabItem : ''}`} onClick={openAdd}>
-        <span className={styles.fabPlus}>+</span>
-        <span>{activeTab === 'meal' ? 'Add Meal' : 'Add Food Item'}</span>
-      </button>
+      <FAB onClick={openAdd} label={activeTab === 'meal' ? 'Add meal' : 'Add food item'} />
 
-      <BottomSheet open={!!sheet} onClose={closeSheet} title={sheetTitle}>
-        <div className={styles.formBody}>
-          {field('name', 'Name', { type: 'text', placeholder: activeTab === 'meal' ? 'e.g. Chicken & Rice' : 'e.g. Greek Yogurt', autoCapitalize: 'words' })}
-          <div className={styles.row}>
-            {field('calories', 'Calories', { type: 'number', inputMode: 'decimal', placeholder: '0', min: '0' })}
-            {field('protein', 'Protein (g)', { type: 'number', inputMode: 'decimal', placeholder: '0', min: '0' })}
+      <BottomSheet
+        open={!!sheet}
+        onClose={() => setSheet(null)}
+        title={sheet?.mode === 'edit' ? `Edit ${activeTab === 'meal' ? 'Meal' : 'Food Item'}` : `Add ${activeTab === 'meal' ? 'Meal' : 'Food Item'}`}
+      >
+        <div className="stack gap-12">
+          <FormField label="Name" value={form.name} error={errors.name} onChange={v => setForm(f => ({ ...f, name: v }))}
+            inputProps={{ type: 'text', placeholder: activeTab === 'meal' ? 'e.g. Chicken & Rice' : 'e.g. Greek Yogurt', autoCapitalize: 'words' }} />
+          <div className="row gap-10">
+            <FormField label="Calories" value={form.calories} error={errors.calories} onChange={v => setForm(f => ({ ...f, calories: v }))}
+              inputProps={{ type: 'number', inputMode: 'decimal', placeholder: '0', min: '0' }} />
+            <FormField label="Protein g" value={form.protein} error={errors.protein} onChange={v => setForm(f => ({ ...f, protein: v }))}
+              inputProps={{ type: 'number', inputMode: 'decimal', placeholder: '0', min: '0' }} />
           </div>
-          <div className={styles.row}>
-            {field('carbs', 'Carbs (g)', { type: 'number', inputMode: 'decimal', placeholder: '0', min: '0' })}
-            {field('fat', 'Fat (g)', { type: 'number', inputMode: 'decimal', placeholder: '0', min: '0' })}
+          <div className="row gap-10">
+            <FormField label="Carbs g" value={form.carbs} error={errors.carbs} onChange={v => setForm(f => ({ ...f, carbs: v }))}
+              inputProps={{ type: 'number', inputMode: 'decimal', placeholder: '0', min: '0' }} />
+            <FormField label="Fat g" value={form.fat} error={errors.fat} onChange={v => setForm(f => ({ ...f, fat: v }))}
+              inputProps={{ type: 'number', inputMode: 'decimal', placeholder: '0', min: '0' }} />
           </div>
-          <button className={styles.submitBtn} onClick={handleSubmit} disabled={isPending}>
-            {isPending ? 'Saving…' : sheet?.mode === 'edit' ? 'Save Changes' : `Add ${activeTab === 'meal' ? 'Meal' : 'Food Item'}`}
+          <button className="btn-primary" onClick={handleSubmit} disabled={createFood.isPending || updateFood.isPending} style={{ marginTop: 4 }}>
+            {createFood.isPending || updateFood.isPending ? 'Saving…' : sheet?.mode === 'edit' ? 'Save Changes' : `Add ${activeTab === 'meal' ? 'Meal' : 'Food Item'}`}
           </button>
         </div>
       </BottomSheet>

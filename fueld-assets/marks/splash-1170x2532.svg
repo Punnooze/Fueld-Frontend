@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1170 2532" width="1170" height="2532">
+  
+  <rect width="1170" height="2532" fill="#0A0B0A"></rect>
+  <g transform="translate(425 970) scale(8.125)">
+    <path d="M14 8 L52 8 L40 26 L46 26 L20 56 L28 34 L18 34 Z" fill="#C8F135"></path>
+  </g>
+  <text x="585" y="1640" text-anchor="middle" class="word">
+    <tspan fill="#F2F4EE">FUEL</tspan><tspan fill="#C8F135">D</tspan>
+  </text>
+  <text x="585" y="1700" text-anchor="middle" class="tag" fill="#9BA199">FUEL · TRAIN · MEASURE</text>
+</svg>
