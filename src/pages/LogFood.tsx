@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useFoods } from '../hooks/useFoods'
 import { useCreateLog } from '../hooks/useLogs'
 import { BottomSheet } from '../components/BottomSheet'
@@ -15,12 +16,13 @@ const FILTERS: Filter[] = ['All', 'Meals', 'Items', 'High Protein', 'Low Cal']
 const QUICK_AMOUNTS = [0.5, 1, 1.5, 2]
 
 export const LogFood = () => {
+  const [searchParams] = useSearchParams()
   const [search, setSearch]   = useState('')
   const [filter, setFilter]   = useState<Filter>('All')
   const [selected, setSelected] = useState<FoodItem | null>(null)
   const [quantity, setQuantity] = useState(1)
   const [note, setNote]       = useState('')
-  const [date, setDate]       = useState(today())
+  const [date, setDate]       = useState(searchParams.get('date') || today())
 
   const { data: foods = [], isLoading, isError } = useFoods()
   const createLog = useCreateLog(date)

@@ -60,13 +60,13 @@ const normalizeEntry = (raw: Record<string, unknown>): LogEntry => {
     protein: resolve('protein', 'protein'),
     carbs: resolve('carbs', 'carbs'),
     fat: resolve('fat', 'fat'),
-    date: String(raw.date ?? ''),
+    date: String(raw.date ?? '').slice(0, 10),
     note: raw.note ? String(raw.note) : undefined,
   }
 }
 
 const normalizeWeekDay = (raw: Record<string, unknown>): WeekDay => ({
-  date: String(raw.date ?? ''),
+  date: String(raw.date ?? '').slice(0, 10),
   calories: Number(raw.calories ?? 0),
   protein: Number(raw.protein ?? 0),
 })
