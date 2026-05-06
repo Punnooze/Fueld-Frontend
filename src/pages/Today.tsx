@@ -210,30 +210,41 @@ export const Today = () => {
 
       {/* ── Calorie hero card ── */}
       <div className="px">
-        <Card padding={24} style={{ alignItems: 'center', display: 'flex', flexDirection: 'column', gap: 24 }}>
-          <RingProgress
-            progress={progress}
-            size={220}
-            strokeWidth={8}
-            color={isOver ? 'var(--danger)' : 'var(--accent)'}
-          >
-            <div className="stack gap-4" style={{ alignItems: 'center' }}>
-              <MetricNumber size="xl" color={isOver ? 'var(--danger)' : 'var(--accent)'}>
-                {Math.abs(Math.round(remaining))}
-              </MetricNumber>
-              <span className="t-eyebrow">{isOver ? 'Over Target' : 'Kcal Left'}</span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-low)' }}>
-                {Math.round(totals.calories)} / {targets.calories} kcal
-              </span>
+        {isLoading ? (
+          <Card padding={24} style={{ alignItems: 'center', display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <div className="skeleton-row" style={{ width: 220, height: 220, borderRadius: '50%' }} />
+            <div className="row gap-16" style={{ width: '100%' }}>
+              <div className="skeleton-row flex-1" style={{ height: 40 }} />
+              <div className="skeleton-row flex-1" style={{ height: 40 }} />
+              <div className="skeleton-row flex-1" style={{ height: 40 }} />
             </div>
-          </RingProgress>
+          </Card>
+        ) : (
+          <Card padding={24} style={{ alignItems: 'center', display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <RingProgress
+              progress={progress}
+              size={220}
+              strokeWidth={8}
+              color={isOver ? 'var(--danger)' : 'var(--accent)'}
+            >
+              <div className="stack gap-4" style={{ alignItems: 'center' }}>
+                <MetricNumber size="xl" color={isOver ? 'var(--danger)' : 'var(--accent)'}>
+                  {Math.abs(Math.round(remaining))}
+                </MetricNumber>
+                <span className="t-eyebrow">{isOver ? 'Over Target' : 'Kcal Left'}</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-low)' }}>
+                  {Math.round(totals.calories)} / {targets.calories} kcal
+                </span>
+              </div>
+            </RingProgress>
 
-          <div className="row gap-16" style={{ width: '100%' }}>
-            <MacroBar label="Protein" current={totals.protein} target={targets.protein} color="var(--protein)" />
-            <MacroBar label="Carbs"   current={totals.carbs}   target={targets.carbs}   color="var(--carbs)"   />
-            <MacroBar label="Fat"     current={totals.fat}     target={targets.fat}     color="var(--fat)"     />
-          </div>
-        </Card>
+            <div className="row gap-16" style={{ width: '100%' }}>
+              <MacroBar label="Protein" current={totals.protein} target={targets.protein} color="var(--protein)" />
+              <MacroBar label="Carbs"   current={totals.carbs}   target={targets.carbs}   color="var(--carbs)"   />
+              <MacroBar label="Fat"     current={totals.fat}     target={targets.fat}     color="var(--fat)"     />
+            </div>
+          </Card>
+        )}
       </div>
 
       {/* ── Streak tile ── */}

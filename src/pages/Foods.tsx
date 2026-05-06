@@ -26,12 +26,13 @@ const FormField = ({
   onChange: (v: string) => void;
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>
 }) => (
-  <div className="stack gap-5">
-    <label className="t-eyebrow">{label}</label>
+  <div className="stack gap-5" style={{marginBottom: 10, marginRight: 10}}>
+    <label className="t-eyebrow" style={{marginBottom: 10}}>{label}</label>
     <input
       className={`input ${error ? 'input-error' : ''}`}
       value={value}
       onChange={e => onChange(e.target.value)}
+      style={{marginRight: 10}}
       {...inputProps}
     />
     {error && <span style={{ fontSize: 11, color: 'var(--danger)' }}>{error}</span>}
@@ -149,8 +150,8 @@ export const Foods = () => {
         onClose={() => setSheet(null)}
         title={sheet?.mode === 'edit' ? `Edit ${activeTab === 'meal' ? 'Meal' : 'Food Item'}` : `Add ${activeTab === 'meal' ? 'Meal' : 'Food Item'}`}
       >
-        <div className="stack gap-12">
-          <FormField label="Name" value={form.name} error={errors.name} onChange={v => setForm(f => ({ ...f, name: v }))}
+        <div className="stack gap-12" >
+          <FormField label="Name" value={form.name} error={errors.name}  onChange={v => setForm(f => ({ ...f, name: v }))}
             inputProps={{ type: 'text', placeholder: activeTab === 'meal' ? 'e.g. Chicken & Rice' : 'e.g. Greek Yogurt', autoCapitalize: 'words' }} />
           <div className="row gap-10">
             <FormField label="Calories" value={form.calories} error={errors.calories} onChange={v => setForm(f => ({ ...f, calories: v }))}

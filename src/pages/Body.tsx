@@ -266,7 +266,7 @@ export const Body = () => {
                 <Card padding={14}>
                   <div className="between">
                     <div className="stack gap-2">
-                      <span className="t-eyebrow">Body Fat (US Navy)</span>
+                      <span className="t-eyebrow">Body Fat%</span>
                       <MetricNumber size="lg" color="var(--accent)">~{bodyFat}%</MetricNumber>
                     </div>
                     <button className="btn-icon" title="Estimated using the US Navy circumference method">

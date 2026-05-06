@@ -160,13 +160,14 @@ export const LogFood = () => {
             <div className="stack gap-6">
               <label className="t-eyebrow">Servings</label>
               <input
+              style={{marginBottom: 15}}
                 className={`input input-mono`}
                 type="number" inputMode="decimal" min="0.1" step="0.5"
                 value={quantity || ''} onChange={e => { const n = parseFloat(e.target.value); setQuantity(isNaN(n) ? 0 : n) }}
               />
             </div>
 
-            <div className="row gap-8">
+            <div className="row gap-8" style={{marginBottom: 15}}>
               {QUICK_AMOUNTS.map(q => (
                 <button
                   key={q}
@@ -180,7 +181,7 @@ export const LogFood = () => {
             </div>
 
             {preview && (
-              <div className="card-inner" style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <div className="card-inner" style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 3, marginBottom: 15 }}>
                 <MetricNumber size="md" color="var(--accent)">{preview.calories} kcal</MetricNumber>
                 <span style={{ fontSize: 13, color: 'var(--text-mid)' }}>
                   <span style={{ color: 'var(--protein)' }}>{preview.protein}g P</span>
@@ -193,6 +194,7 @@ export const LogFood = () => {
             )}
 
             <input
+            style={{marginBottom: 15}}
               className="input"
               type="text"
               placeholder="Add a note…"
@@ -201,7 +203,7 @@ export const LogFood = () => {
               maxLength={120}
             />
 
-            <div className="between">
+            <div className="between" style={{marginBottom: 15}}>
               <label className="t-meta">Date</label>
               <input type="date" value={date} max={formatDate(new Date())} onChange={e => setDate(e.target.value)} />
             </div>
