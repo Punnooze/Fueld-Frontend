@@ -75,17 +75,24 @@ export const Stats = () => {
   const cPct   = tCal > 0 ? Math.round(cCal / tCal * 100) : 0
   const fPct   = tCal > 0 ? 100 - pPct - cPct : 0
   const hasMacros = tCal > 0
+  const loggedDaysInRange = new Set(rangeLogs.map(e => e.date)).size || 1
 
-  // Weekly averages
-  const avg = (logs: typeof history30, key: string, days: number) =>
-    logs.length === 0 ? 0 : Math.round(logs.reduce((s, e) => s + ((e as unknown as Record<string, number>)[key] ?? 0), 0) / days)
+  // Weekly averages — divide by logged-day count, not the full 7-day window
+  const avgByLoggedDays = (logs: typeof history30, key: string) => {
+    const daily: Record<string, number> = {}
+    for (const e of logs) {
+      daily[e.date] = (daily[e.date] ?? 0) + ((e as unknown as Record<string, number>)[key] ?? 0)
+    }
+    const days = Object.keys(daily).length
+    return days === 0 ? 0 : Math.round(Object.values(daily).reduce((s, v) => s + v, 0) / days)
+  }
 
   const lastWeekLogs = history30.filter(e => e.date >= daysAgoStr(13) && e.date <= daysAgoStr(7))
   const avgData = [
-    { label: 'AVG KCAL',    val: avg(last7Logs, 'calories', 7), compare: avg(lastWeekLogs, 'calories', 7), unit: '' },
-    { label: 'AVG PROTEIN', val: avg(last7Logs, 'protein', 7),  compare: avg(lastWeekLogs, 'protein', 7),  unit: 'g' },
-    { label: 'AVG CARBS',   val: avg(last7Logs, 'carbs', 7),    compare: avg(lastWeekLogs, 'carbs', 7),    unit: 'g' },
-    { label: 'AVG FAT',     val: avg(last7Logs, 'fat', 7),      compare: avg(lastWeekLogs, 'fat', 7),      unit: 'g' },
+    { label: 'AVG KCAL',    val: avgByLoggedDays(last7Logs, 'calories'), compare: avgByLoggedDays(lastWeekLogs, 'calories'), unit: '' },
+    { label: 'AVG PROTEIN', val: avgByLoggedDays(last7Logs, 'protein'),  compare: avgByLoggedDays(lastWeekLogs, 'protein'),  unit: 'g' },
+    { label: 'AVG CARBS',   val: avgByLoggedDays(last7Logs, 'carbs'),    compare: avgByLoggedDays(lastWeekLogs, 'carbs'),    unit: 'g' },
+    { label: 'AVG FAT',     val: avgByLoggedDays(last7Logs, 'fat'),      compare: avgByLoggedDays(lastWeekLogs, 'fat'),      unit: 'g' },
   ]
 
   // Personal records
@@ -102,8 +109,10 @@ export const Stats = () => {
   const currentRange = RANGES.find(r => r.value === range)!
 
   const Delta = ({ val, compare, unit }: { val: number; compare: number; unit: string }) => {
+    if (val === 0) return <span style={{ fontSize: 11, color: 'var(--text-low)' }}>— no data</span>
+    if (compare === 0) return <span style={{ fontSize: 11, color: 'var(--text-low)' }}>— first week</span>
     const diff = val - compare
-    if (diff === 0 || compare === 0) return <span style={{ fontSize: 11, color: 'var(--text-low)' }}>— flat</span>
+    if (diff === 0) return <span style={{ fontSize: 11, color: 'var(--text-low)' }}>— flat</span>
     const up = diff > 0
     const pct = Math.round(Math.abs(diff / compare) * 100)
     return (
@@ -173,9 +182,9 @@ export const Stats = () => {
                 </div>
                 <div className="stack gap-6" style={{ marginTop: 12 }}>
                   {[
-                    { label: 'Protein', color: 'var(--protein)', avg: Math.round(totalP / selectedDays), pct: pPct },
-                    { label: 'Carbs',   color: 'var(--carbs)',   avg: Math.round(totalC / selectedDays), pct: cPct },
-                    { label: 'Fat',     color: 'var(--fat)',     avg: Math.round(totalF / selectedDays), pct: fPct },
+                    { label: 'Protein', color: 'var(--protein)', avg: Math.round(totalP / loggedDaysInRange), pct: pPct },
+                    { label: 'Carbs',   color: 'var(--carbs)',   avg: Math.round(totalC / loggedDaysInRange), pct: cPct },
+                    { label: 'Fat',     color: 'var(--fat)',     avg: Math.round(totalF / loggedDaysInRange), pct: fPct },
                   ].map(m => (
                     <div key={m.label} className="between">
                       <div className="row gap-8">

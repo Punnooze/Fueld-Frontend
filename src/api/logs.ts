@@ -87,8 +87,14 @@ export const createLog = async (payload: CreateLogPayload): Promise<LogEntry> =>
 }
 
 export const getLogHistory = async (startDate: string, endDate: string): Promise<LogEntry[]> => {
-  const { data } = await client.get<unknown[]>('/logs/history', { params: { startDate, endDate } })
-  return (Array.isArray(data) ? data : []).map(e => normalizeEntry(e as Record<string, unknown>))
+  const { data } = await client.get<unknown>('/logs/history', { params: { startDate, endDate } })
+  // API returns { "YYYY-MM-DD": entry[] } — flatten all date buckets into one list
+  const entries: unknown[] = Array.isArray(data)
+    ? data
+    : data && typeof data === 'object'
+    ? Object.values(data as Record<string, unknown[]>).flat()
+    : []
+  return entries.map(e => normalizeEntry(e as Record<string, unknown>))
 }
 
 export const deleteLog = async (id: string): Promise<void> => {
