@@ -1,13 +1,13 @@
 import { NavLink } from 'react-router-dom'
-import { TodayIcon, LogIcon, MealsIcon, BodyIcon, StatsIcon } from '../assets/icons'
+import { TrophyIcon, ForkIcon, DumbbellIcon, BodyIcon, StatsIcon } from '../assets/icons'
 import styles from './BottomNav.module.css'
 
 const tabs = [
-  { to: '/',      label: 'Today', Icon: TodayIcon },
-  { to: '/log',   label: 'Log',   Icon: LogIcon   },
-  { to: '/foods', label: 'Meals', Icon: MealsIcon  },
-  { to: '/body',  label: 'Body',  Icon: BodyIcon   },
-  { to: '/stats', label: 'Stats', Icon: StatsIcon  },
+  { to: '/',      label: 'Home', Icon: TrophyIcon   },
+  { to: '/fuel',  label: 'Fuel', Icon: ForkIcon     },
+  { to: '/gym',   label: 'Gym',  Icon: DumbbellIcon },
+  { to: '/body',  label: 'Body', Icon: BodyIcon     },
+  { to: '/stats', label: 'Stats', Icon: StatsIcon   },
 ]
 
 export const BottomNav = () => (

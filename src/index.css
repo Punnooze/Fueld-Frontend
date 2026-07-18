@@ -35,10 +35,11 @@
   --danger-dim: rgba(229, 72, 77, 0.12);
   --success: #4FC97A;
 
-  /* Typography */
-  --font-display: "Inter Tight", system-ui, -apple-system, sans-serif;
+  /* Typography — military/techno HUD identity */
+  --font-display: "Chakra Petch", "Inter Tight", system-ui, sans-serif;  /* labels, ranks, titles */
   --font-body:    "Inter", system-ui, -apple-system, sans-serif;
-  --font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+  --font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", monospace;   /* data readouts */
+  --font-mega:    "Teko", "Chakra Petch", sans-serif;                     /* giant numbers */
 
   /* Radii */
   --r-card:  18px;
@@ -53,7 +54,7 @@
   --nav-height:  72px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top:    env(safe-area-inset-top, 0px);
-  --page-x:      20px;
+  --page-x:      22px;
 
   /* Legacy aliases — keeps old hooks working */
   --bg:         var(--bg-0);
@@ -282,3 +283,109 @@ input[type="date"] {
   transition: border-color var(--dur);
 }
 input[type="date"]:focus { border-color: var(--accent); }
+
+/* ── 13. Gamification animations ──────────────────────── */
+/* Fighter card — always-on breathing */
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.012); }
+}
+/* Decay — red pulse outline */
+@keyframes decayPulse {
+  0%, 100% { box-shadow: 0 0 0 1px var(--danger), 0 0 0px rgba(229,72,77,0); }
+  50%      { box-shadow: 0 0 0 1px var(--danger), 0 0 24px rgba(229,72,77,0.45); }
+}
+/* High momentum — accent glow */
+@keyframes momentumGlow {
+  0%, 100% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 0 0px rgba(200,241,53,0); }
+  50%      { box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 0 28px rgba(200,241,53,0.28); }
+}
+/* Streak flame flicker */
+@keyframes flameFlicker {
+  0%, 100% { transform: scale(1) rotate(-1deg); opacity: 0.92; }
+  25%      { transform: scale(1.06) rotate(1deg); opacity: 1; }
+  50%      { transform: scale(0.98) rotate(-1deg); opacity: 0.95; }
+  75%      { transform: scale(1.04) rotate(1deg); opacity: 1; }
+}
+/* XP bar — travelling shine */
+@keyframes xpShine {
+  0%   { transform: translateX(-120%); }
+  100% { transform: translateX(320%); }
+}
+/* Quest complete — particle burst */
+@keyframes questBurst {
+  0%   { transform: translate(0,0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--bx), var(--by)) scale(0); opacity: 0; }
+}
+/* Level/Rank up — insignia slam */
+@keyframes slamIn {
+  0%   { transform: translateY(-60vh) scale(2.4); opacity: 0; }
+  60%  { transform: translateY(0) scale(1); opacity: 1; }
+  72%  { transform: translateY(-8px) scale(1.04); }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+@keyframes shockwave {
+  0%   { transform: scale(0); opacity: 0.7; }
+  100% { transform: scale(3.2); opacity: 0; }
+}
+@keyframes overlayFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes burnIn {
+  from { opacity: 0; filter: blur(6px); letter-spacing: 0.5em; }
+  to   { opacity: 1; filter: blur(0); letter-spacing: 0.14em; }
+}
+/* Ember/heat particles drifting up behind the fighter */
+@keyframes emberDrift {
+  0%   { transform: translateY(0) scale(1); opacity: 0; }
+  15%  { opacity: 0.9; }
+  100% { transform: translateY(-90px) scale(0.3); opacity: 0; }
+}
+/* Diagonal struck-metal sheen across a surface */
+@keyframes sheenSweep {
+  0%   { transform: translateX(-140%) skewX(-18deg); }
+  100% { transform: translateX(260%) skewX(-18deg); }
+}
+/* Scroll / load reveal */
+@keyframes revealUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+/* EKG heartbeat sweep */
+@keyframes ekgSweep {
+  from { stroke-dashoffset: 0; }
+  to   { stroke-dashoffset: -1000; }
+}
+/* Decay glitch nudge */
+@keyframes decayGlitch {
+  0%, 92%, 100% { transform: translate(0,0); }
+  94% { transform: translate(-2px, 1px); }
+  96% { transform: translate(2px, -1px); }
+  98% { transform: translate(-1px, 0); }
+}
+/* Spark fly-out on strike */
+@keyframes sparkFly {
+  0%   { transform: translate(0,0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--sx), var(--sy)) scale(0); opacity: 0; }
+}
+/* Slow ambient ring rotation */
+@keyframes ringSpin { to { transform: rotate(360deg); } }
+/* Value tick flash */
+@keyframes tickFlash {
+  0% { color: var(--accent-hot); text-shadow: 0 0 16px rgba(200,241,53,0.8); }
+  100% { color: inherit; text-shadow: none; }
+}
+/* Terminal cursor blink */
+@keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+/* Scanline drift */
+@keyframes scan { from { background-position: 0 0; } to { background-position: 0 8px; } }
+
+/* Reveal utility — hidden until .is-in is added (scroll/load) */
+.reveal { opacity: 0; transform: translateY(18px); }
+.reveal.is-in { animation: revealUp 620ms var(--ease) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
+  .reveal { opacity: 1; transform: none; }
+}

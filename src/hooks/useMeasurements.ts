@@ -21,6 +21,8 @@ export const useCreateMeasurement = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: MEASUREMENTS_KEY })
       qc.invalidateQueries({ queryKey: LATEST_MEASUREMENTS_KEY })
+      qc.invalidateQueries({ queryKey: ['character'] })
+      qc.invalidateQueries({ queryKey: ['quests'] })
     },
   })
 }

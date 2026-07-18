@@ -28,7 +28,11 @@ export const useCreateWeight = () => {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (p: WeightPayload) => createWeight(p),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['weight'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['weight'] })
+      qc.invalidateQueries({ queryKey: ['character'] })
+      qc.invalidateQueries({ queryKey: ['quests'] })
+    },
   })
 }
 

@@ -12,7 +12,7 @@ import { useToast } from '../components/Toast'
 import { Card } from '../components/ui/Card'
 import { Eyebrow } from '../components/ui/Eyebrow'
 import { MetricNumber } from '../components/ui/MetricNumber'
-import { SettingsIcon, MoreIcon, TrashIcon, StreakIcon, ChevronRightIcon } from '../assets/icons'
+import { SettingsIcon, MoreIcon, TrashIcon, StreakIcon, ChevronRightIcon, MealsIcon } from '../assets/icons'
 import { sumMacros } from '../utils/macros'
 import { today, formatDate } from '../utils/dates'
 import { getLogs } from '../api/logs'
@@ -133,6 +133,9 @@ export const Today = () => {
         <LogoHeader width={120} height={24} />
         <div className="row gap-10">
           <span className="t-meta">{dateLabel}</span>
+          <button className="btn-icon" onClick={() => navigate('/foods')} aria-label="Meals">
+            <MealsIcon width={20} height={20} />
+          </button>
           <button className="btn-icon" onClick={() => setSettingsOpen(true)} aria-label="Settings">
             <SettingsIcon width={20} height={20} />
           </button>

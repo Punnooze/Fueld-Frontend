@@ -4,6 +4,8 @@ import svgr from 'vite-plugin-svgr'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  // allow ngrok tunnels to reach the dev server (on-device / remote testing)
+  server: { allowedHosts: ['.ngrok-free.app'] },
   plugins: [
     react(),
     svgr(),

@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useSettings, useUpdateSettings } from '../hooks/useSettings'
+import { useSyncHevy } from '../hooks/useSync'
 import { useToast } from './Toast'
-import { CloseIcon, FlameIcon, InfoIcon } from '../assets/icons'
+import { CloseIcon, FlameIcon, InfoIcon, DumbbellIcon, RefreshIcon } from '../assets/icons'
 import styles from './SettingsModal.module.css'
 
 interface Props { open: boolean; onClose: () => void }
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://fueld-server.onrender.com'
 
 const Field = ({ label, value, onChange, unit }: {
   label: string; value: string; unit: string
@@ -28,11 +32,15 @@ const Field = ({ label, value, onChange, unit }: {
 export const SettingsModal = ({ open, onClose }: Props) => {
   const { data: settings } = useSettings()
   const update = useUpdateSettings()
+  const hevySync = useSyncHevy()
+  const qc = useQueryClient()
   const { showToast } = useToast()
 
   const [form, setForm] = useState({
     targetCalories: '1700', targetProtein: '140',
     targetCarbs: '180',    targetFat: '60', height: '175',
+    characterName: '', hevyApiKey: '',
+    stepTarget: '10000', sleepTarget: '8',
   })
 
   useEffect(() => {
@@ -42,6 +50,10 @@ export const SettingsModal = ({ open, onClose }: Props) => {
       targetCarbs:    String(settings.targetCarbs),
       targetFat:      String(settings.targetFat),
       height:         String(settings.height),
+      characterName:  settings.characterName ?? '',
+      hevyApiKey:     settings.hevyApiKey ?? '',
+      stepTarget:     String(settings.stepTarget ?? 10000),
+      sleepTarget:    String(settings.sleepTarget ?? 8),
     })
   }, [settings])
 
@@ -61,6 +73,10 @@ export const SettingsModal = ({ open, onClose }: Props) => {
         targetCarbs:    Number(form.targetCarbs),
         targetFat:      Number(form.targetFat),
         height:         Number(form.height),
+        characterName:  form.characterName.trim() || undefined,
+        hevyApiKey:     form.hevyApiKey.trim() || undefined,
+        stepTarget:     Number(form.stepTarget),
+        sleepTarget:    Number(form.sleepTarget),
       })
       showToast('Settings saved!')
       onClose()
@@ -96,12 +112,72 @@ export const SettingsModal = ({ open, onClose }: Props) => {
           </div>
 
           {/* Body */}
-          <div className="stack gap-12" style={{marginTop: 30, marginBottom: 30}}>
+          <div className="stack gap-12" style={{marginTop: 30}}>
             <div className="row gap-8">
               <InfoIcon width={14} height={14} style={{ color: 'var(--text-mid)' }} />
               <span className="t-eyebrow">Body</span>
             </div>
             <Field label="Height" value={form.height} onChange={set('height')} unit="cm" />
+            <div className="row gap-10" style={{ gap: 20 }}>
+              <Field label="Step Goal" value={form.stepTarget} onChange={set('stepTarget')} unit="" />
+              <Field label="Sleep Goal" value={form.sleepTarget} onChange={set('sleepTarget')} unit="h" />
+            </div>
+          </div>
+
+          {/* Fighter + integrations */}
+          <div className="stack gap-12" style={{ marginTop: 30, marginBottom: 30 }}>
+            <div className="row gap-8">
+              <DumbbellIcon width={14} height={14} style={{ color: 'var(--accent)' }} />
+              <span className="t-eyebrow">Fighter</span>
+            </div>
+            <div className="stack gap-5">
+              <label className="t-eyebrow" style={{ marginBottom: 10 }}>Callsign</label>
+              <input className="input" type="text" placeholder="FIGHTER" maxLength={16}
+                value={form.characterName} onChange={set('characterName')} />
+            </div>
+            <div className="stack gap-5">
+              <label className="t-eyebrow" style={{ marginBottom: 10 }}>Hevy API Key</label>
+              <input className="input" type="password" placeholder="paste from hevy.com → Developer"
+                value={form.hevyApiKey} onChange={set('hevyApiKey')} autoComplete="off" />
+              <span className="t-micro" style={{ color: 'var(--text-low)' }}>
+                Enables Sync Hevy — pulls your lifts, awards XP + PRs.
+              </span>
+              <button
+                className="btn-ghost"
+                style={{ height: 44, justifyContent: 'center', gap: 8 }}
+                disabled={hevySync.isPending || !settings?.hevyApiKey}
+                onClick={() => hevySync.mutate(undefined, {
+                  onSuccess: r => showToast(`Synced ${r.synced} · +${r.xpEarned} XP${r.newPRs.length ? ` · ${r.newPRs.length} PR` : ''}`),
+                  onError: () => showToast('Hevy sync failed', 'error'),
+                })}
+              >
+                <RefreshIcon width={14} height={14} className={hevySync.isPending ? styles.spin : ''} />
+                {hevySync.isPending ? 'Syncing…' : 'Sync Hevy Now'}
+              </button>
+            </div>
+
+            <div className="stack gap-5">
+              <label className="t-eyebrow" style={{ marginBottom: 10 }}>Google Health</label>
+              <button
+                className="btn-ghost"
+                style={{ height: 48, justifyContent: 'center' }}
+                onClick={() => { window.location.href = `${API_URL}/health/auth` }}
+              >
+                {settings?.googleHealthConnected ? '✓ Connected — Reconnect' : 'Connect Google Health'}
+              </button>
+              <span className="t-micro" style={{ color: 'var(--text-low)' }}>
+                Pulls steps, sleep, HRV, resting heart rate & weight.
+              </span>
+              {settings?.googleHealthConnected && (
+                <button
+                  className="btn-ghost"
+                  style={{ height: 44, justifyContent: 'center', gap: 8 }}
+                  onClick={() => { qc.invalidateQueries({ queryKey: ['health-today'] }); showToast('Refreshing health data') }}
+                >
+                  <RefreshIcon width={14} height={14} /> Refresh Health Data
+                </button>
+              )}
+            </div>
           </div>
 
           <button className="btn-primary" onClick={handleSave} disabled={update.isPending}>

@@ -47,6 +47,9 @@ export const useCreateLog = (date: string) => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: logsKey(date) })
       qc.invalidateQueries({ queryKey: ['week'] })
+      qc.invalidateQueries({ queryKey: ['character'] })
+      qc.invalidateQueries({ queryKey: ['quests'] })
+      qc.invalidateQueries({ queryKey: ['streak'] })
     },
   })
 }

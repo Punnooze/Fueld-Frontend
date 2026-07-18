@@ -46,8 +46,9 @@ export const getLatestMeasurements = async (): Promise<Measurement | null> => {
 }
 
 export const createMeasurement = async (payload: MeasurementPayload): Promise<Measurement> => {
-  const { data } = await client.post<unknown>('/measurements', payload)
-  return normalize(data as Record<string, unknown>)
+  const { data } = await client.post<Record<string, unknown>>('/measurements', payload)
+  const raw = (data?.entry as Record<string, unknown>) ?? data
+  return normalize(raw as Record<string, unknown>)
 }
 
 export const updateMeasurement = async (id: string, payload: MeasurementPayload): Promise<Measurement> => {

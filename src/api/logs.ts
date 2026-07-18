@@ -82,8 +82,10 @@ export const getWeekLogs = async (startDate: string): Promise<WeekDay[]> => {
 }
 
 export const createLog = async (payload: CreateLogPayload): Promise<LogEntry> => {
-  const { data } = await client.post<unknown>('/logs', payload)
-  return normalizeEntry(data as Record<string, unknown>)
+  const { data } = await client.post<Record<string, unknown>>('/logs', payload)
+  // backend returns { entry, completedQuests }
+  const raw = (data?.entry as Record<string, unknown>) ?? data
+  return normalizeEntry(raw as Record<string, unknown>)
 }
 
 export const getLogHistory = async (startDate: string, endDate: string): Promise<LogEntry[]> => {

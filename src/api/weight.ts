@@ -35,8 +35,9 @@ export const getLatestWeight = async (): Promise<WeightEntry | null> => {
 }
 
 export const createWeight = async (payload: WeightPayload): Promise<WeightEntry> => {
-  const { data } = await client.post<unknown>('/weight', payload)
-  return normalize(data as Record<string, unknown>)
+  const { data } = await client.post<Record<string, unknown>>('/weight', payload)
+  const raw = (data?.entry as Record<string, unknown>) ?? data
+  return normalize(raw as Record<string, unknown>)
 }
 
 export const deleteWeight = async (id: string): Promise<void> => {

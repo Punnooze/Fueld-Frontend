@@ -6,6 +6,12 @@ export interface Settings {
   targetCarbs: number
   targetFat: number
   height: number
+  characterName?: string
+  hevyApiKey?: string
+  googleHealthConnected: boolean
+  fitbitConnected: boolean
+  stepTarget: number
+  sleepTarget: number
 }
 
 const normalize = (raw: Record<string, unknown>): Settings => ({
@@ -14,6 +20,12 @@ const normalize = (raw: Record<string, unknown>): Settings => ({
   targetCarbs: Number(raw.targetCarbs ?? 180),
   targetFat: Number(raw.targetFat ?? 60),
   height: Number(raw.height ?? 175),
+  characterName: raw.characterName ? String(raw.characterName) : undefined,
+  hevyApiKey: raw.hevyApiKey ? String(raw.hevyApiKey) : undefined,
+  googleHealthConnected: Boolean(raw.googleHealthConnected),
+  fitbitConnected: Boolean(raw.fitbitConnected),
+  stepTarget: Number(raw.stepTarget ?? 10000),
+  sleepTarget: Number(raw.sleepTarget ?? 8),
 })
 
 export const getSettings = async (): Promise<Settings> => {
