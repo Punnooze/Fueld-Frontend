@@ -5,6 +5,7 @@ import { useCharacter } from '../hooks/useCharacter'
 import { useQuests } from '../hooks/useQuests'
 import { useSettings } from '../hooks/useSettings'
 import { useHealthToday } from '../hooks/useHealthToday'
+import { useWeightJourney } from '../hooks/useWeight'
 import { FighterCardCombat } from '../components/FighterCardCombat'
 import { QuestList } from '../components/QuestList'
 import { LevelUpOverlay } from '../components/LevelUpOverlay'
@@ -45,6 +46,7 @@ export const Home = () => {
   const settingsQ = useSettings()
   const googleConnected = !!settingsQ.data?.googleHealthConnected
   const healthQ = useHealthToday(googleConnected)
+  const journeyQ = useWeightJourney()
 
   const character = charQ.data
   const quests = questsQ.data ?? []
@@ -134,6 +136,26 @@ export const Home = () => {
               )}
               {health && (health.restingHeartRate || health.hrv || health.weightKg) && (
                 <Reveal delay={120}><HealthStats data={health} accent={rc} /></Reveal>
+              )}
+
+              {/* 2b. Goal-weight journey (only when a goal is set) */}
+              {journeyQ.data && (
+                <Reveal delay={135}>
+                  <button className="card" onClick={() => navigate('/body')}
+                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: 16, borderLeft: `3px solid ${rc}` }}>
+                    <div className="between" style={{ marginBottom: 10 }}>
+                      <span className="t-eyebrow">{journeyQ.data.reached ? '🎯 Goal Reached' : `Journey to ${journeyQ.data.goalWeight}kg`}</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 15, color: rc }}>{journeyQ.data.pct}%</span>
+                    </div>
+                    <div style={{ height: 8, borderRadius: 'var(--r-pill)', background: 'var(--bg-3)', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${journeyQ.data.pct}%`, background: rc, borderRadius: 'var(--r-pill)',
+                        boxShadow: journeyQ.data.pct > 0 ? `0 0 10px ${rc}` : 'none', transition: 'width 700ms var(--ease)' }} />
+                    </div>
+                    <span className="t-micro" style={{ display: 'block', marginTop: 8, color: 'var(--text-low)' }}>
+                      {journeyQ.data.currentWeight}kg now · {Math.max(0, journeyQ.data.remainingKg)}kg to go · +{Math.floor(journeyQ.data.bestKg) * 150} XP earned
+                    </span>
+                  </button>
+                </Reveal>
               )}
 
               {/* 3. Workouts (above quests) */}

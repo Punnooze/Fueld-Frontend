@@ -34,6 +34,28 @@ export const getLatestWeight = async (): Promise<WeightEntry | null> => {
   }
 }
 
+export interface WeightJourney {
+  goalWeight: number
+  startWeight: number
+  currentWeight: number
+  losing: boolean
+  totalKg: number
+  achievedKg: number
+  bestKg: number
+  remainingKg: number
+  pct: number
+  reached: boolean
+}
+
+export const getWeightJourney = async (): Promise<WeightJourney | null> => {
+  try {
+    const { data } = await client.get<WeightJourney | null>('/weight/journey')
+    return data ?? null
+  } catch {
+    return null
+  }
+}
+
 export const createWeight = async (payload: WeightPayload): Promise<WeightEntry> => {
   const { data } = await client.post<Record<string, unknown>>('/weight', payload)
   const raw = (data?.entry as Record<string, unknown>) ?? data

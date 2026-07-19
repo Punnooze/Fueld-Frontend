@@ -18,6 +18,7 @@ export const useUpdateSettings = () => {
     mutationFn: (payload: Partial<Settings>) => patchSettings(payload),
     onSuccess: (data) => {
       qc.setQueryData(SETTINGS_KEY, data)
+      qc.invalidateQueries({ queryKey: ['weight', 'journey'] })
     },
   })
 }

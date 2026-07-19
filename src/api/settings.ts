@@ -12,6 +12,7 @@ export interface Settings {
   fitbitConnected: boolean
   stepTarget: number
   sleepTarget: number
+  goalWeight?: number
 }
 
 const normalize = (raw: Record<string, unknown>): Settings => ({
@@ -26,6 +27,7 @@ const normalize = (raw: Record<string, unknown>): Settings => ({
   fitbitConnected: Boolean(raw.fitbitConnected),
   stepTarget: Number(raw.stepTarget ?? 10000),
   sleepTarget: Number(raw.sleepTarget ?? 8),
+  goalWeight: raw.goalWeight != null ? Number(raw.goalWeight) : undefined,
 })
 
 export const getSettings = async (): Promise<Settings> => {

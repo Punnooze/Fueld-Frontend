@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useMeasurements, useCreateMeasurement } from '../hooks/useMeasurements'
-import { useLatestWeight, useWeight, useCreateWeight, useDeleteWeight } from '../hooks/useWeight'
-import { useSettings } from '../hooks/useSettings'
+import { useLatestWeight, useWeight, useWeightJourney, useCreateWeight, useDeleteWeight } from '../hooks/useWeight'
+import { useSettings, useUpdateSettings } from '../hooks/useSettings'
 import { WeightGraph } from '../components/WeightGraph'
 import { BottomSheet } from '../components/BottomSheet'
 import { SegmentedControl } from '../components/SegmentedControl'
@@ -109,15 +109,26 @@ export const Body = () => {
   const [weightInput, setWeightInput]   = useState('')
   const [weightDate, setWeightDate]     = useState(today())
   const [measureDate, setMeasureDate]   = useState(today())
+  const [editGoal, setEditGoal]         = useState(false)
+  const [goalInput, setGoalInput]       = useState('')
 
   const { data: allMeasurements = [], isLoading: loadingM } = useMeasurements()
   const { data: latestWeight, isLoading: loadingW }         = useLatestWeight()
   const { data: settings }                                  = useSettings()
   const { data: weightHistory = [], isLoading: loadingWH } = useWeight(weightRange)
+  const { data: journey }                                   = useWeightJourney()
   const createMeasurement = useCreateMeasurement()
   const createWeight      = useCreateWeight()
   const deleteWeight      = useDeleteWeight()
+  const updateSettings    = useUpdateSettings()
   const { showToast }     = useToast()
+
+  const saveGoal = async () => {
+    const g = parseFloat(goalInput)
+    if (!g || g <= 0) return
+    try { await updateSettings.mutateAsync({ goalWeight: g }); setEditGoal(false); showToast('Goal set!') }
+    catch { showToast('Failed to save', 'error') }
+  }
 
   const height  = settings?.height ?? 175
   const bmi     = latestWeight ? calcBMI(latestWeight.weight, height) : null
@@ -366,6 +377,65 @@ export const Body = () => {
                     {height}cm <EditIcon width={13} height={13} />
                   </button>
                 )}
+              </div>
+            </Card>
+          )}
+
+          {/* ── Goal weight journey (gamified) ── */}
+          {editGoal ? (
+            <Card padding={16}>
+              <div className="stack gap-8">
+                <span className="t-eyebrow">Goal Weight (kg)</span>
+                <div className="row gap-8">
+                  <input className="input input-mono" style={{ flex: 1 }} type="number" inputMode="decimal"
+                    value={goalInput} onChange={e => setGoalInput(e.target.value)} placeholder="78" autoFocus />
+                  <button className="btn-primary" style={{ width: 'auto', padding: '0 20px' }} onClick={saveGoal} disabled={updateSettings.isPending}>Save</button>
+                  <button className="btn-ghost" style={{ width: 'auto', padding: '0 14px' }} onClick={() => setEditGoal(false)}>Cancel</button>
+                </div>
+              </div>
+            </Card>
+          ) : journey ? (
+            <Card padding={16}>
+              <div className="between" style={{ marginBottom: 12 }}>
+                <div className="stack gap-2">
+                  <span className="t-eyebrow">{journey.reached ? '🎯 Goal Reached' : `Journey to ${journey.goalWeight}kg`}</span>
+                  <MetricNumber size="lg" color="var(--accent)">{journey.pct}%</MetricNumber>
+                </div>
+                <button className="btn-icon" onClick={() => { setGoalInput(String(journey.goalWeight)); setEditGoal(true) }}>
+                  <EditIcon width={15} height={15} />
+                </button>
+              </div>
+
+              <div style={{ height: 10, borderRadius: 'var(--r-pill)', background: 'var(--bg-3)', overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${journey.pct}%`, background: 'var(--accent)', borderRadius: 'var(--r-pill)',
+                  boxShadow: journey.pct > 0 ? '0 0 10px var(--accent)' : 'none', transition: 'width 700ms var(--ease)' }} />
+              </div>
+              <div className="between" style={{ marginTop: 6 }}>
+                <span className="t-micro" style={{ color: 'var(--text-low)' }}>{journey.startWeight}kg start</span>
+                <span className="t-micro" style={{ color: 'var(--text-low)' }}>{journey.goalWeight}kg goal</span>
+              </div>
+
+              <div className="row gap-8" style={{ marginTop: 14 }}>
+                {([
+                  [journey.losing ? 'Lost' : 'Gained', `${Math.abs(journey.achievedKg)}kg`],
+                  [journey.reached ? 'Done' : 'To go', `${Math.max(0, journey.remainingKg)}kg`],
+                  ['XP earned', `+${Math.floor(journey.bestKg) * 150}`],
+                ] as const).map(([label, val]) => (
+                  <div key={label} className="stack gap-2" style={{ flex: 1, alignItems: 'center' }}>
+                    <MetricNumber size="sm" color={label === 'XP earned' ? 'var(--accent)' : 'var(--text-hi)'}>{val}</MetricNumber>
+                    <span className="t-micro" style={{ color: 'var(--text-low)' }}>{label}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          ) : (
+            <Card padding={16}>
+              <div className="between">
+                <div className="stack gap-2" style={{ flex: 1, marginRight: 12 }}>
+                  <span className="t-eyebrow">Goal Weight</span>
+                  <span className="t-meta" style={{ color: 'var(--text-mid)' }}>Set a target — earn XP toward your rank as you close the gap.</span>
+                </div>
+                <button className="btn-primary" style={{ width: 'auto', padding: '0 18px', height: 38, flexShrink: 0 }} onClick={() => { setGoalInput(''); setEditGoal(true) }}>Set goal</button>
               </div>
             </Card>
           )}
