@@ -8,6 +8,11 @@ import { Card } from '../components/ui/Card'
 import { Eyebrow } from '../components/ui/Eyebrow'
 import { MetricNumber } from '../components/ui/MetricNumber'
 import { useTargets } from '../hooks/useSettings'
+import { useXp } from '../hooks/useXp'
+import { useRecords, useCharacter } from '../hooks/useCharacter'
+import { XpTrendGraph } from '../components/XpTrendGraph'
+import { RecordsGrid } from '../components/RecordsGrid'
+import { rankColor } from '../utils/ranks'
 import { formatDate } from '../utils/dates'
 import { ChevronDownIcon, TrophyIcon, StreakIcon } from '../assets/icons'
 import EmptyStats from '../assets/illustrations/empty-stats.svg?react'
@@ -31,6 +36,10 @@ export const Stats = () => {
   const [range, setRange]         = useState<Range>('7d')
   const [rangeOpen, setRangeOpen] = useState(false)
   const targets = useTargets()
+  const { data: events = [] } = useXp(100)
+  const { data: recordData } = useRecords()
+  const { data: character } = useCharacter()
+  const accent = character ? rankColor(character.rankTier) : 'var(--accent)'
 
   const todayStr = formatDate(new Date())
   const start30  = daysAgoStr(29)
@@ -169,6 +178,20 @@ export const Stats = () => {
               </div>
             ))}
           </div>
+
+          {/* XP progression */}
+          <Card>
+            <Eyebrow right={<span style={{ color: accent, fontFamily: 'var(--font-mono)', fontSize: 11 }}>climb</span>}>XP Progression</Eyebrow>
+            <XpTrendGraph events={events} days={30} color={accent} />
+          </Card>
+
+          {/* Records */}
+          {recordData && (
+            <Card>
+              <Eyebrow right={<TrophyIcon width={14} height={14} style={{ color: accent }} />}>Records</Eyebrow>
+              <RecordsGrid records={recordData} accent={accent} />
+            </Card>
+          )}
 
           {/* Macro split */}
           <Card>

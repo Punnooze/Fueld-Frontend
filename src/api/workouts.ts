@@ -46,6 +46,11 @@ export const getRecentWorkouts = async (limit = 10): Promise<Workout[]> => {
   return (Array.isArray(data) ? data : []).map(w => normalize(w as Record<string, unknown>))
 }
 
+export const getWorkouts = async (startDate: string, endDate: string): Promise<Workout[]> => {
+  const { data } = await client.get<unknown[]>('/workouts', { params: { startDate, endDate } })
+  return (Array.isArray(data) ? data : []).map(w => normalize(w as Record<string, unknown>))
+}
+
 export const createWorkout = async (
   payload: CreateWorkoutPayload,
 ): Promise<CreateWorkoutResult> => {

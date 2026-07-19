@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useSettings, useUpdateSettings } from '../hooks/useSettings'
 import { useSyncHevy } from '../hooks/useSync'
 import { useToast } from './Toast'
+import { enablePush, testPush } from '../api/push'
 import { CloseIcon, FlameIcon, InfoIcon, DumbbellIcon, RefreshIcon } from '../assets/icons'
 import styles from './SettingsModal.module.css'
 
@@ -177,6 +178,36 @@ export const SettingsModal = ({ open, onClose }: Props) => {
                   <RefreshIcon width={14} height={14} /> Refresh Health Data
                 </button>
               )}
+            </div>
+
+            <div className="stack gap-5">
+              <label className="t-eyebrow" style={{ marginBottom: 10 }}>Notifications</label>
+              <button
+                className="btn-ghost"
+                style={{ height: 48, justifyContent: 'center' }}
+                onClick={async () => {
+                  const r = await enablePush()
+                  showToast(
+                    r === 'ok' ? 'Notifications enabled'
+                    : r === 'denied' ? 'Permission denied'
+                    : r === 'unsupported' ? 'Install the app first (Add to Home Screen)'
+                    : 'Could not enable',
+                    r === 'ok' ? 'success' : 'error',
+                  )
+                }}
+              >
+                Enable Notifications
+              </button>
+              <button
+                className="btn-ghost"
+                style={{ height: 44, justifyContent: 'center' }}
+                onClick={async () => { await testPush(); showToast('Test sent') }}
+              >
+                Send Test
+              </button>
+              <span className="t-micro" style={{ color: 'var(--text-low)' }}>
+                Nightly reminder ~10:30pm + PR/streak alerts. Works only when installed to Home Screen.
+              </span>
             </div>
           </div>
 

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { useState, useEffect, useRef, type ReactNode } from 'react'
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import { QueryClient } from '@tanstack/react-query'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister'
@@ -32,6 +32,33 @@ const persister = createSyncStoragePersister({
   storage: window.sessionStorage,
   key: 'fueld-qcache',
 })
+
+// Swipe left/right between the 5 main tabs
+const TABS = ['/', '/fuel', '/gym', '/body', '/stats']
+const SwipeTabs = ({ children }: { children: ReactNode }) => {
+  const nav = useNavigate()
+  const loc = useLocation()
+  const start = useRef<{ x: number; y: number } | null>(null)
+
+  const onStart = (e: React.TouchEvent) => {
+    const t = e.touches[0]
+    start.current = { x: t.clientX, y: t.clientY }
+  }
+  const onEnd = (e: React.TouchEvent) => {
+    if (!start.current) return
+    const t = e.changedTouches[0]
+    const dx = t.clientX - start.current.x
+    const dy = t.clientY - start.current.y
+    start.current = null
+    // horizontal, decisive swipe only
+    if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.8) return
+    const i = TABS.indexOf(loc.pathname)
+    if (i === -1) return
+    if (dx < 0 && i < TABS.length - 1) nav(TABS[i + 1])
+    else if (dx > 0 && i > 0) nav(TABS[i - 1])
+  }
+  return <div onTouchStart={onStart} onTouchEnd={onEnd} style={{ minHeight: '100%' }}>{children}</div>
+}
 
 const ConnectingBanner = () => {
   const [show, setShow] = useState(true)
@@ -67,6 +94,7 @@ export default function App() {
           <div className={styles.app}>
             <ConnectingBanner />
             <main className={styles.main}>
+              <SwipeTabs>
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/profile" element={<Profile />} />
@@ -78,6 +106,7 @@ export default function App() {
                 <Route path="/body" element={<Body />} />
                 <Route path="/stats" element={<Stats />} />
               </Routes>
+              </SwipeTabs>
             </main>
             <BottomNav />
           </div>

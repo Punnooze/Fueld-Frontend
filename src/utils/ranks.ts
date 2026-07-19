@@ -13,17 +13,20 @@ export const CLASSES = ['Powerlifter', 'Hybrid', 'Endurance Fighter', 'All-Round
 
 // Per-rank identity colour, escalating steel → gold as you climb.
 export const RANK_COLORS = [
-  '#9BA199', // RECRUIT — steel
-  '#7FB069', // SOLDIER — olive
-  '#4FA3C9', // VETERAN — steel blue
-  '#C8F135', // WARRIOR — lime
-  '#B06BFF', // ELITE — violet
-  '#FF8A3D', // MASTER — ember
-  '#FFC93C', // APEX — gold
+  '#C0C6CC', // RECRUIT — silver
+  '#4FA3C9', // SOLDIER — blue
+  '#C8F135', // VETERAN — green
+  '#FF5A5F', // WARRIOR — red
+  '#FF8A3D', // ELITE — ember (between red & gold)
+  '#FFC93C', // MASTER — gold
+  '#B06BFF', // APEX — purple
 ] as const
 
 export const rankColor = (tier: number): string =>
   RANK_COLORS[Math.max(0, Math.min(tier, RANK_COLORS.length - 1))]
+
+// cumulative XP to reach level n (mirror of backend)
+export const xpThreshold = (n: number): number => (n * (n + 1) * 100) / 2
 
 /**
  * Continuous progression scalar (0..RANKS.length) for the evolving avatar.

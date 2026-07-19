@@ -1,16 +1,16 @@
 import type { HealthToday } from '../api/sync'
 import { RingProgress } from './RingProgress'
 import { useCountUp } from '../hooks/useCountUp'
-import { HeartIcon, StreakIcon, ScaleIcon } from '../assets/icons'
 
 interface Props {
   data: HealthToday
   stepTarget: number
   sleepTarget: number
+  accent?: string // rank colour — threaded subtly through the chrome
 }
 
 const STEP_COLOR = 'var(--accent)'
-const SLEEP_COLOR = '#4FD1C5' // teal
+const SLEEP_COLOR = '#5A9EFF' // azure — complements lime, off the green family
 const clamp = (n: number) => Math.max(0, Math.min(1, n))
 
 // Recovery = weighted blend of sleep vs goal, HRV, and resting HR (lower better).
@@ -32,7 +32,7 @@ function status(score: number): { word: string; color: string } {
   return { word: 'DEPLETED', color: '#FF5A5F' }                  // red
 }
 
-export const HealthRings = ({ data, stepTarget, sleepTarget }: Props) => {
+export const HealthRings = ({ data, stepTarget, sleepTarget, accent = 'var(--accent)' }: Props) => {
   const steps = data.steps ?? 0
   const sleep = data.sleepHours ?? 0
   const stepsUp = Math.round(useCountUp(steps, 900))
@@ -42,25 +42,33 @@ export const HealthRings = ({ data, stepTarget, sleepTarget }: Props) => {
   const scoreUp = Math.round(useCountUp(score ?? 0, 1000))
   const st = status(score ?? 0)
 
-  const stats = [
-    { icon: HeartIcon, value: data.restingHeartRate ?? '—', label: 'resting bpm' },
-    { icon: StreakIcon, value: data.hrv ?? '—', label: 'hrv ms' },
-    { icon: ScaleIcon, value: data.weightKg != null ? data.weightKg : '—', label: 'weight kg' },
-  ]
+  const tick = (pos: 'tl' | 'tr' | 'bl' | 'br'): React.CSSProperties => {
+    const b: React.CSSProperties = { position: 'absolute', width: 12, height: 12, borderColor: accent, borderStyle: 'solid', borderWidth: 0, opacity: 0.55 }
+    const m = 10
+    if (pos === 'tl') return { ...b, top: m, left: m, borderTopWidth: 1, borderLeftWidth: 1 }
+    if (pos === 'tr') return { ...b, top: m, right: m, borderTopWidth: 1, borderRightWidth: 1 }
+    if (pos === 'bl') return { ...b, bottom: m, left: m, borderBottomWidth: 1, borderLeftWidth: 1 }
+    return { ...b, bottom: m, right: m, borderBottomWidth: 1, borderRightWidth: 1 }
+  }
 
   return (
-    <div className="card" style={{ padding: '28px 20px' }}>
+    <div className="card" style={{ padding: '28px 20px', position: 'relative', border: `1px solid ${accent}2e` }}>
+      {(['tl', 'tr', 'bl', 'br'] as const).map(p => <span key={p} style={tick(p)} />)}
+      {/* eyebrow */}
+      <div className="row" style={{ justifyContent: 'center', marginBottom: 6 }}>
+        <span className="t-micro" style={{ color: accent, opacity: 0.7, letterSpacing: '0.28em', textTransform: 'uppercase' }}>◆ Today ◆</span>
+      </div>
       {/* Rings — first, thick */}
       <div className="row" style={{ justifyContent: 'space-around', padding: '8px 0 4px' }}>
         <div className="stack gap-8" style={{ alignItems: 'center' }}>
-          <RingProgress progress={steps / stepTarget} size={132} strokeWidth={14} color={STEP_COLOR}>
+          <RingProgress progress={steps / stepTarget} size={134} strokeWidth={26} color={STEP_COLOR} loopArrow animate>
             <span style={{ fontFamily: 'var(--font-mega)', fontSize: 30, fontWeight: 600, color: 'var(--text-hi)', lineHeight: 0.9 }}>{stepsUp.toLocaleString()}</span>
             <span className="t-micro" style={{ color: 'var(--text-low)' }}>/ {(stepTarget / 1000).toFixed(0)}k</span>
           </RingProgress>
           <span className="t-micro" style={{ color: STEP_COLOR, letterSpacing: '0.14em', textTransform: 'uppercase' }}>Steps</span>
         </div>
         <div className="stack gap-8" style={{ alignItems: 'center' }}>
-          <RingProgress progress={sleep / sleepTarget} size={132} strokeWidth={14} color={SLEEP_COLOR}>
+          <RingProgress progress={sleep / sleepTarget} size={134} strokeWidth={26} color={SLEEP_COLOR} loopArrow animate>
             <span style={{ fontFamily: 'var(--font-mega)', fontSize: 30, fontWeight: 600, color: 'var(--text-hi)', lineHeight: 0.9 }}>
               {sleepUp.toFixed(1)}<span style={{ fontSize: 15 }}>h</span>
             </span>
@@ -70,23 +78,10 @@ export const HealthRings = ({ data, stepTarget, sleepTarget }: Props) => {
         </div>
       </div>
 
-      <div style={{ height: 1, background: 'var(--line)', margin: '18px 0 14px' }} />
-
-      {/* Stats — hrv, resting bpm, weight */}
-      <div className="row" style={{ justifyContent: 'space-between' }}>
-        {stats.map((s, i) => (
-          <div key={i} className="stack gap-3" style={{ alignItems: 'center', flex: 1 }}>
-            <s.icon width={15} height={15} style={{ color: 'var(--text-mid)' }} />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 18, color: 'var(--text-hi)' }}>{s.value}</span>
-            <span className="t-micro" style={{ color: 'var(--text-low)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{s.label}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Recovery score — last */}
+      {/* Recovery score */}
       {score != null && (
         <>
-          <div style={{ height: 1, background: 'var(--line)', margin: '16px 0 14px' }} />
+          <div style={{ height: 1, background: 'var(--line)', margin: '18px 0 14px' }} />
           <div className="between" style={{ marginBottom: 8 }}>
             <span className="t-eyebrow">Recovery</span>
             <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 11, letterSpacing: '0.16em', color: st.color }}>{st.word}</span>

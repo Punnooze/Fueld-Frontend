@@ -13,8 +13,6 @@ const fmt = (dateStr: string) => {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 }
 
-const CustomDot = () => null
-
 export const WeightGraph = ({ data }: Props) => {
   if (data.length === 0) return (
     <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -61,8 +59,8 @@ export const WeightGraph = ({ data }: Props) => {
           dataKey="weight"
           stroke="#c8f135"
           strokeWidth={2.5}
-          dot={<CustomDot />}
-          activeDot={{ r: 5, fill: '#c8f135', stroke: '#0a0a0a', strokeWidth: 2 }}
+          dot={{ r: 4, fill: '#c8f135', stroke: '#0a0a0a', strokeWidth: 2 }}
+          activeDot={{ r: 6, fill: '#c8f135', stroke: '#0a0a0a', strokeWidth: 2 }}
         />
       </LineChart>
     </ResponsiveContainer>

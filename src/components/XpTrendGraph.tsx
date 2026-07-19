@@ -5,10 +5,11 @@ import { formatDate } from '../utils/dates'
 interface Props {
   events: XpEvent[]
   days?: number
+  color?: string
 }
 
 // Cumulative XP earned over the window — the climb.
-export const XpTrendGraph = ({ events, days = 30 }: Props) => {
+export const XpTrendGraph = ({ events, days = 30, color = '#C8F135' }: Props) => {
   const today = new Date()
   const range = Array.from({ length: days }, (_, i) => {
     const d = new Date(today)
@@ -40,8 +41,8 @@ export const XpTrendGraph = ({ events, days = 30 }: Props) => {
       <AreaChart data={data} margin={{ top: 6, right: 4, bottom: 0, left: 4 }}>
         <defs>
           <linearGradient id="xpFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#C8F135" stopOpacity={0.45} />
-            <stop offset="100%" stopColor="#C8F135" stopOpacity={0} />
+            <stop offset="0%" stopColor={color} stopOpacity={0.45} />
+            <stop offset="100%" stopColor={color} stopOpacity={0} />
           </linearGradient>
         </defs>
         <XAxis
@@ -55,7 +56,7 @@ export const XpTrendGraph = ({ events, days = 30 }: Props) => {
           labelStyle={{ color: '#9BA199' }}
           formatter={(v) => [`${v} XP`, 'Total']}
         />
-        <Area type="monotone" dataKey="xp" stroke="#C8F135" strokeWidth={2} fill="url(#xpFill)" />
+        <Area type="monotone" dataKey="xp" stroke={color} strokeWidth={2} fill="url(#xpFill)" />
       </AreaChart>
     </ResponsiveContainer>
   )

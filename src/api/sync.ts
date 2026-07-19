@@ -12,6 +12,8 @@ export interface HealthToday {
   weightKg?: number | null
   sleepHours?: number | null
   hrv?: number | null
+  activeZoneMinutes?: number | null
+  cardioMinutes?: number | null
 }
 
 export const syncHevy = async (): Promise<HevySyncResult> => {
@@ -23,9 +25,12 @@ export const syncHealth = async (): Promise<void> => {
   await client.get('/health/sync')
 }
 
-export const getHealthToday = async (): Promise<HealthToday | null> => {
+export const getHealthToday = async (dateOverride?: string): Promise<HealthToday | null> => {
   try {
-    const { data } = await client.get<HealthToday>('/health/today')
+    // send local civil date so steps match the device's day (tz-safe)
+    const d = new Date()
+    const date = dateOverride ?? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    const { data } = await client.get<HealthToday>('/health/today', { params: { date } })
     return data ?? null
   } catch {
     return null

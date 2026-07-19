@@ -11,7 +11,8 @@ export default defineConfig({
     svgr(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'push-sw.js'],
+      workbox: { importScripts: ['push-sw.js'] },
       manifest: {
         name: 'FUELD',
         short_name: 'FUELD',

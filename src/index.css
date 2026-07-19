@@ -284,6 +284,13 @@ input[type="date"] {
 }
 input[type="date"]:focus { border-color: var(--accent); }
 
+/* no focus outline on charts (tap on recharts was drawing an orange ring) */
+.recharts-wrapper,
+.recharts-wrapper:focus,
+.recharts-surface,
+.recharts-surface:focus,
+.recharts-wrapper *:focus { outline: none !important; }
+
 /* ── 13. Gamification animations ──────────────────────── */
 /* Fighter card — always-on breathing */
 @keyframes breathe {

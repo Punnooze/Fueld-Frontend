@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getRecentWorkouts,
+  getWorkouts,
   createWorkout,
   deleteWorkout,
   type CreateWorkoutPayload,
@@ -12,6 +13,14 @@ export const WORKOUTS_KEY = ['workouts']
 
 export const useRecentWorkouts = (limit = 10) =>
   useQuery({ queryKey: [...WORKOUTS_KEY, limit], queryFn: () => getRecentWorkouts(limit) })
+
+export const useWorkoutsRange = (startDate: string, endDate: string, enabled = true) =>
+  useQuery({
+    queryKey: [...WORKOUTS_KEY, 'range', startDate, endDate],
+    queryFn: () => getWorkouts(startDate, endDate),
+    enabled,
+    staleTime: 60_000,
+  })
 
 export const useCreateWorkout = () => {
   const qc = useQueryClient()

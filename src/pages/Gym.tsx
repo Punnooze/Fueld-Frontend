@@ -2,8 +2,9 @@ import { PageHeader } from '../components/ui/PageHeader'
 import { Eyebrow } from '../components/ui/Eyebrow'
 import { StatTile } from '../components/StatTile'
 import { MiniSpark } from '../components/MiniSpark'
-import { useToast } from '../components/Toast'
-import { useSyncHevy } from '../hooks/useSync'
+import { WorkoutCalendar } from '../components/WorkoutCalendar'
+import { WeeklySplit } from '../components/WeeklySplit'
+import { TodayTraining } from '../components/TodayTraining'
 import { useSettings } from '../hooks/useSettings'
 import { useHevyStats } from '../hooks/useHevyStats'
 import { DumbbellIcon, RefreshIcon, TrophyIcon, ScaleIcon } from '../assets/icons'
@@ -20,16 +21,6 @@ export const Gym = () => {
   const { data: settings } = useSettings()
   const connected = !!settings?.hevyApiKey
   const { data: stats, isLoading } = useHevyStats(7, connected)
-  const hevy = useSyncHevy()
-  const { showToast } = useToast()
-
-  const sync = () => {
-    if (!connected) return showToast('Add your Hevy API key in Settings first', 'error')
-    hevy.mutate(undefined, {
-      onSuccess: r => showToast(`Synced ${r.synced} · +${r.xpEarned} XP${r.newPRs.length ? ` · ${r.newPRs.length} PR` : ''}`),
-      onError: () => showToast('Hevy sync failed', 'error'),
-    })
-  }
 
   const tonnes = stats ? stats.totalVolume / 1000 : 0
   const cars = tonnes / 1.5 // ~1.5t per car
@@ -39,12 +30,6 @@ export const Gym = () => {
       <PageHeader title="Gym" subtitle="Your training, analyzed" />
 
       <div className="px stack gap-24">
-        {/* sync */}
-        <button className={styles.syncCta} onClick={sync} disabled={hevy.isPending} data-on={connected}>
-          <RefreshIcon width={18} height={18} className={hevy.isPending ? styles.spin : ''} />
-          <span>{hevy.isPending ? 'Syncing…' : connected ? 'Sync from Hevy' : 'Connect Hevy in Settings'}</span>
-        </button>
-
         {!connected && (
           <div className="empty-state">
             <EmptyStats width={180} height={180} />
@@ -59,6 +44,10 @@ export const Gym = () => {
             <div className="skeleton-row" style={{ height: 200 }} />
           </div>
         )}
+
+        {connected && <TodayTraining />}
+        {connected && <WeeklySplit enabled={connected} />}
+        {connected && <WorkoutCalendar enabled={connected} />}
 
         {connected && stats && stats.totalSessions === 0 && (
           <div className="empty-state">
@@ -97,7 +86,7 @@ export const Gym = () => {
                       <div className="stack gap-3 flex-1 min-w-0">
                         <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title}</span>
                         <span className="t-micro" style={{ color: 'var(--text-low)' }}>
-                          max {e.maxWeight}kg · {e.sets} sets
+                          max {e.maxWeight}kg · last {e.currentWeight}kg
                         </span>
                       </div>
                       <MiniSpark values={e.trend} color={dir === 'down' ? 'var(--danger)' : 'var(--accent)'} />

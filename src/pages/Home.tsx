@@ -8,15 +8,19 @@ import { useHealthToday } from '../hooks/useHealthToday'
 import { FighterCardCombat } from '../components/FighterCardCombat'
 import { QuestList } from '../components/QuestList'
 import { LevelUpOverlay } from '../components/LevelUpOverlay'
+import { StreakBreakOverlay } from '../components/StreakBreakOverlay'
 import { SettingsModal } from '../components/SettingsModal'
 import { HealthRings } from '../components/HealthRings'
+import { HealthStats } from '../components/HealthStats'
+import { TodayTrainingCard } from '../components/TodayTraining'
 import { FAB } from '../components/FAB'
 import { Reveal } from '../components/Reveal'
+import { RankInsignia } from '../components/RankInsignia'
 import { useToast } from '../components/Toast'
 import type { Character } from '../api/character'
+import { rankColor } from '../utils/ranks'
 import { SettingsIcon } from '../assets/icons'
 import LogoHeader from '../assets/brand/logo-header.svg?react'
-import LoadingMark from '../assets/marks/loading.svg?react'
 import styles from './Home.module.css'
 
 function attitude(c: Character): string {
@@ -49,6 +53,7 @@ export const Home = () => {
 
   // wait for everything before revealing the page
   const booting =
+    // true || // ponytail: TEMP force loader for preview — remove
     charQ.isLoading || questsQ.isLoading || settingsQ.isLoading ||
     (googleConnected && healthQ.isLoading)
 
@@ -64,10 +69,13 @@ export const Home = () => {
   if (booting) {
     return (
       <div className={`page ${styles.page}`} style={{ display: 'grid', placeItems: 'center', minHeight: '100vh' }}>
-        <div className="stack gap-16" style={{ alignItems: 'center' }}>
-          <LoadingMark width={56} height={56} style={{ animation: 'ringSpin 1.1s linear infinite', color: 'var(--accent)' }} />
-          <span className="t-micro" style={{ color: 'var(--text-low)', letterSpacing: '0.24em' }}>LOADING FIGHTER</span>
-        </div>
+        <span style={{
+          fontFamily: 'var(--font-mega)', fontSize: 88, fontWeight: 600,
+          letterSpacing: '0.02em', color: 'var(--text-hi)', lineHeight: 1,
+          animation: 'breathe 2.4s var(--ease) infinite',
+        }}>
+          FUEL<span style={{ color: 'var(--accent)' }}>D</span>
+        </span>
       </div>
     )
   }
@@ -76,9 +84,31 @@ export const Home = () => {
     <div className={`page ${styles.page}`}>
       <header className={styles.header}>
         <LogoHeader width={120} height={24} />
-        <button className="btn-icon" onClick={() => setSettingsOpen(true)} aria-label="Settings">
-          <SettingsIcon width={20} height={20} />
-        </button>
+        <div className="row gap-10">
+          {character && (() => {
+            const rc = rankColor(character.rankTier)
+            const t = character.rankTier
+            const glow = 5 + t * 3.5
+            const a = Math.round((0.22 + t * 0.1) * 255).toString(16).padStart(2, '0')
+            return (
+              <button
+                className={styles.avatarBtn}
+                onClick={() => navigate('/profile')}
+                aria-label="Profile"
+                style={{
+                  borderColor: rc,
+                  background: `radial-gradient(circle, ${rc}22, var(--bg-2) 70%)`,
+                  boxShadow: `0 0 ${glow}px ${rc}${a}, inset 0 0 ${4 + t}px ${rc}22`,
+                }}
+              >
+                <RankInsignia tier={character.rankTier} size={24} color={rc} />
+              </button>
+            )
+          })()}
+          <button className="btn-icon" onClick={() => setSettingsOpen(true)} aria-label="Settings">
+            <SettingsIcon width={20} height={20} />
+          </button>
+        </div>
       </header>
 
       <div className="px stack gap-24">
@@ -87,6 +117,7 @@ export const Home = () => {
         {character && (
           <>
             <LevelUpOverlay character={character} />
+            <StreakBreakOverlay character={character} />
 
             {/* 1. Recovery / rings */}
             {health && (health.steps || health.sleepHours || health.restingHeartRate) && (
@@ -95,16 +126,25 @@ export const Home = () => {
                   data={health}
                   stepTarget={settings?.stepTarget ?? 10000}
                   sleepTarget={settings?.sleepTarget ?? 8}
+                  accent={rankColor(character.rankTier)}
                 />
               </Reveal>
             )}
 
             {/* 2. Fighter card → profile */}
-            <Reveal delay={70}><FighterCardCombat character={character} /></Reveal>
-            <Reveal delay={120}><p className={styles.attitude}>{attitude(character)}</p></Reveal>
+            <Reveal delay={60}><FighterCardCombat character={character} /></Reveal>
 
-            {/* 3. Quests */}
-            <Reveal delay={170}><QuestList quests={quests} /></Reveal>
+            {/* 3. Vitals strip (below the card) */}
+            {health && (health.restingHeartRate || health.hrv || health.weightKg) && (
+              <Reveal delay={100}><HealthStats data={health} accent={rankColor(character.rankTier)} /></Reveal>
+            )}
+
+            <Reveal delay={120}><TodayTrainingCard /></Reveal>
+
+            <Reveal delay={140}><p className={styles.attitude} style={{ borderLeftColor: rankColor(character.rankTier) }}>{attitude(character)}</p></Reveal>
+
+            {/* 4. Quests */}
+            <Reveal delay={170}><QuestList quests={quests} accent={rankColor(character.rankTier)} /></Reveal>
           </>
         )}
       </div>

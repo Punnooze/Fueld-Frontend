@@ -8,7 +8,7 @@ import { XpTrendGraph } from './XpTrendGraph'
 import { ClassAvatar } from './ClassAvatar'
 import { Eyebrow } from './ui/Eyebrow'
 import { getClassTheme, CLASS_THEMES } from '../utils/classes'
-import { RANKS, rankColor } from '../utils/ranks'
+import { RANKS, rankColor, xpThreshold } from '../utils/ranks'
 import { UNLOCKS } from '../utils/unlocks'
 import { DumbbellIcon, ForkIcon, StreakIcon, TrophyIcon, CheckIcon } from '../assets/icons'
 import styles from './CharacterPanels.module.css'
@@ -26,7 +26,7 @@ const relTime = (iso: string): string => {
 
 export const CharacterPanels = ({ character: c, events }: { character: Character; events: XpEvent[] }) => {
   const theme = getClassTheme(c.class)
-  const accent = c.decaying ? 'var(--danger)' : theme.color
+  const accent = c.decaying ? 'var(--danger)' : rankColor(c.rankTier)
 
   return (
     <div className="stack gap-24">
@@ -41,7 +41,7 @@ export const CharacterPanels = ({ character: c, events }: { character: Character
               <b style={{ color: accent }}>LEVEL {c.level + 1}</b>
             </span>
             <div style={{ height: 1, background: 'var(--line)' }} />
-            <XpTrendGraph events={events} days={30} />
+            <XpTrendGraph events={events} days={30} color={accent} />
           </div>
         </section>
       </Reveal>
@@ -77,7 +77,15 @@ export const CharacterPanels = ({ character: c, events }: { character: Character
       {/* ── Rank ladder ── */}
       <Reveal>
         <section>
-          <Eyebrow>Rank Ladder</Eyebrow>
+          {(() => {
+            const nextRank = RANKS[c.rankTier + 1]
+            const toNext = nextRank ? xpThreshold(nextRank.minLevel - 1) - c.xp.total : 0
+            return (
+              <Eyebrow right={nextRank && toNext > 0 ? `${toNext.toLocaleString()} XP to ${nextRank.name}` : 'MAX RANK'}>
+                Rank Ladder
+              </Eyebrow>
+            )
+          })()}
           <div className="stack gap-8">
             {RANKS.map((r, i) => {
               const achieved = i <= c.rankTier
