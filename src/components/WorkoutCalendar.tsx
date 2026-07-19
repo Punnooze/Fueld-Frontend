@@ -1,6 +1,10 @@
 import { useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useWorkoutsRange } from '../hooks/useWorkouts'
+import { getCardioDates } from '../api/sync'
 import { Eyebrow } from './ui/Eyebrow'
+
+const CARDIO = '#5A9EFF'
 import { ChevronRightIcon, DumbbellIcon } from '../assets/icons'
 import { formatDate, today } from '../utils/dates'
 import styles from './WorkoutCalendar.module.css'
@@ -20,6 +24,8 @@ export const WorkoutCalendar = ({ enabled = true }: { enabled?: boolean }) => {
   const monthEnd = formatDate(new Date(y, m + 1, 0))
 
   const { data: workouts = [] } = useWorkoutsRange(monthStart, monthEnd, enabled)
+  const { data: cardioDates = [] } = useQuery({ queryKey: ['cardio-dates'], queryFn: getCardioDates, enabled })
+  const cardioSet = useMemo(() => new Set(cardioDates), [cardioDates])
 
   const byDate = useMemo(() => {
     const map = new Map<string, typeof workouts>()
@@ -67,6 +73,7 @@ export const WorkoutCalendar = ({ enabled = true }: { enabled?: boolean }) => {
             if (day == null) return <span key={i} />
             const ds = formatDate(new Date(y, m, day))
             const has = byDate.has(ds)
+            const cardio = cardioSet.has(ds)
             const isToday = ds === todayStr
             const isSel = ds === selected
             return (
@@ -77,8 +84,9 @@ export const WorkoutCalendar = ({ enabled = true }: { enabled?: boolean }) => {
                 style={{
                   background: has ? 'var(--accent)' : 'transparent',
                   color: has ? 'var(--accent-ink)' : 'var(--text-mid)',
-                  fontWeight: has ? 700 : 500,
+                  fontWeight: has || cardio ? 700 : 500,
                   border: isSel ? '2px solid var(--text-hi)' : isToday ? '1px solid var(--line)' : '2px solid transparent',
+                  boxShadow: cardio ? `inset 0 0 0 2px ${CARDIO}` : undefined,
                   cursor: has ? 'pointer' : 'default',
                 }}
               >
@@ -86,6 +94,16 @@ export const WorkoutCalendar = ({ enabled = true }: { enabled?: boolean }) => {
               </button>
             )
           })}
+        </div>
+
+        {/* legend */}
+        <div className="row gap-16" style={{ marginTop: 12, justifyContent: 'center' }}>
+          <span className="row gap-6 t-micro" style={{ color: 'var(--text-low)' }}>
+            <span style={{ width: 10, height: 10, borderRadius: 3, background: 'var(--accent)' }} /> Gym
+          </span>
+          <span className="row gap-6 t-micro" style={{ color: 'var(--text-low)' }}>
+            <span style={{ width: 10, height: 10, borderRadius: 3, boxShadow: `inset 0 0 0 2px ${CARDIO}` }} /> Cardio
+          </span>
         </div>
       </div>
 

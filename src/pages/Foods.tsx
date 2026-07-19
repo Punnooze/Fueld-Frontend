@@ -51,9 +51,8 @@ export const Foods = () => {
   const [form, setForm]           = useState<FormState>(EMPTY_FORM)
   const [errors, setErrors]       = useState<Partial<FormState>>({})
 
-  const custom  = foods.filter(f => f.isCustom  && f.type === activeTab)
-  const library = foods.filter(f => !f.isCustom && f.type === activeTab)
-  const isEmpty = !isLoading && !isError && custom.length === 0 && library.length === 0
+  const items = foods.filter(f => f.type === activeTab)
+  const isEmpty = !isLoading && !isError && items.length === 0
 
   const openAdd  = () => { setForm(EMPTY_FORM); setErrors({}); setSheet({ mode: 'add' }) }
   const openEdit = (food: FoodItem) => {
@@ -124,22 +123,12 @@ export const Foods = () => {
 
       {!isLoading && !isError && !isEmpty && (
         <div className="stack" style={{ padding: '0 var(--page-x)', gap: 24 }}>
-          {custom.length > 0 && (
-            <div>
-              <Eyebrow>Your {activeTab === 'meal' ? 'Meals' : 'Food Items'}</Eyebrow>
-              <div className="stack gap-6">
-                {custom.map(f => <FoodCard key={f.id} food={f} onEdit={openEdit} onDelete={handleDelete} />)}
-              </div>
+          <div>
+            <Eyebrow>Your {activeTab === 'meal' ? 'Meals' : 'Food'}</Eyebrow>
+            <div className="stack gap-6">
+              {items.map(f => <FoodCard key={f.id} food={f} onEdit={openEdit} onDelete={handleDelete} />)}
             </div>
-          )}
-          {library.length > 0 && (
-            <div>
-              <Eyebrow>Library</Eyebrow>
-              <div className="stack gap-6">
-                {library.map(f => <FoodCard key={f.id} food={f} />)}
-              </div>
-            </div>
-          )}
+          </div>
         </div>
       )}
 

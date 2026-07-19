@@ -9,11 +9,17 @@ import { MetricNumber } from '../components/ui/MetricNumber'
 import { SearchIcon, BarcodeIcon, FilterIcon, PlusIcon } from '../assets/icons'
 import { today, formatDate } from '../utils/dates'
 import type { FoodItem } from '../api/foods'
+import type { Meal } from '../api/logs'
 import styles from './LogFood.module.css'
 
 type Filter = 'All' | 'Meals' | 'Items' | 'High Protein' | 'Low Cal'
 const FILTERS: Filter[] = ['All', 'Meals', 'Items', 'High Protein', 'Low Cal']
 const QUICK_AMOUNTS = [0.5, 1, 1.5, 2]
+const MEALS: Meal[] = ['breakfast', 'lunch', 'dinner', 'other']
+const defaultMeal = (): Meal => {
+  const h = new Date().getHours()
+  return h < 11 ? 'breakfast' : h < 16 ? 'lunch' : h < 21 ? 'dinner' : 'other'
+}
 
 export const LogFood = () => {
   const [searchParams] = useSearchParams()
@@ -22,6 +28,7 @@ export const LogFood = () => {
   const [selected, setSelected] = useState<FoodItem | null>(null)
   const [quantity, setQuantity] = useState(1)
   const [note, setNote]       = useState('')
+  const [meal, setMeal]       = useState<Meal>(defaultMeal())
   const [date, setDate]       = useState(searchParams.get('date') || today())
 
   const { data: foods = [], isLoading, isError } = useFoods()
@@ -55,9 +62,9 @@ export const LogFood = () => {
   const handleAdd = async () => {
     if (!selected) return
     try {
-      await createLog.mutateAsync({ foodItemId: selected.id, quantity, date, note: note.trim() || undefined })
+      await createLog.mutateAsync({ foodItemId: selected.id, quantity, date, meal, note: note.trim() || undefined })
       showToast('Logged!')
-      setSelected(null); setQuantity(1); setNote('')
+      setSelected(null); setQuantity(1); setNote(''); setMeal(defaultMeal())
     } catch { showToast('Failed to log', 'error') }
   }
 
@@ -150,7 +157,7 @@ export const LogFood = () => {
       )}
 
       {/* Bottom sheet — quantity picker */}
-      <BottomSheet open={!!selected} onClose={() => { setSelected(null); setQuantity(1); setNote('') }} title="Add to Log">
+      <BottomSheet open={!!selected} onClose={() => { setSelected(null); setQuantity(1); setNote(''); setMeal(defaultMeal()) }} title="Add to Log">
         {selected && (
           <div className="stack gap-14">
             <p style={{ fontSize: 18, fontWeight: 700, fontFamily: 'var(--font-display)', color: 'var(--text-hi)' }}>
@@ -178,6 +185,22 @@ export const LogFood = () => {
                   {q}×
                 </button>
               ))}
+            </div>
+
+            <div className="stack gap-6" style={{ marginBottom: 15 }}>
+              <label className="t-eyebrow">Meal</label>
+              <div className="row gap-8 wrap">
+                {MEALS.map(m => (
+                  <button
+                    key={m}
+                    className={`chip ${meal === m ? 'chip-active' : ''}`}
+                    style={{ textTransform: 'capitalize' }}
+                    onClick={() => setMeal(m)}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {preview && (

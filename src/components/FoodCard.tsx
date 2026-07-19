@@ -13,7 +13,7 @@ interface Props {
 
 export const FoodCard = ({ food, onDelete, onEdit, onSelect, selected }: Props) => {
   const [actionsOpen, setActionsOpen] = useState(false)
-  const hasActions = food.isCustom && (onEdit || onDelete)
+  const hasActions = onEdit || onDelete
 
   return (
     <div

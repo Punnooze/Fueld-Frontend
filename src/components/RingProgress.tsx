@@ -62,6 +62,7 @@ export const RingProgress = ({
               cy={size / 2 + radius * Math.sin(tip * 2 * Math.PI) + 2}
               r={strokeWidth * 0.52} fill="rgba(0,0,0,0.6)" filter="url(#ringHeadShadow)"
             />
+            {/* overflow lap — same colour as base; the head shadow alone shows it loops over */}
             <circle
               cx={size / 2} cy={size / 2} r={radius}
               fill="none" stroke={color} strokeWidth={strokeWidth}

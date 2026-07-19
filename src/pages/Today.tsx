@@ -22,6 +22,8 @@ import EmptyLog from '../assets/illustrations/empty-log.svg?react'
 import styles from './Today.module.css'
 
 const DAY_LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+const MEAL_ORDER = ['breakfast', 'lunch', 'dinner', 'other'] as const
+const MEAL_LABEL: Record<string, string> = { breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner', other: 'Other' }
 
 function getWeekDays(baseDate: Date): Date[] {
   const dow = baseDate.getDay()
@@ -286,45 +288,49 @@ export const Today = () => {
         )}
 
         {!isLoading && !isError && logs.length > 0 && (
-          <div className="stack gap-8">
-            {logs.map(entry => (
-              <Card key={entry.id} padding={0} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 12px 12px 14px', minHeight: 64 }}>
-                {/* Left tile */}
-                <div style={{ width: 40, height: 40, background: 'var(--bg-2)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <RingProgress progress={entry.calories / targets.calories} size={32} strokeWidth={3}>
-                    <span style={{ fontSize: 7, fontFamily: 'var(--font-mono)', color: 'var(--text-low)' }}>
-                      {Math.round(Math.min(entry.calories / targets.calories, 1) * 100)}
-                    </span>
-                  </RingProgress>
+          <div className="stack gap-16">
+            {MEAL_ORDER.map(meal => {
+              const items = logs.filter(e => (e.meal || 'other') === meal)
+              if (items.length === 0) return null
+              const kcal = Math.round(items.reduce((s, e) => s + e.calories, 0))
+              return (
+                <div key={meal} className="stack gap-8">
+                  <div className="between" style={{ padding: '0 2px' }}>
+                    <span className="t-eyebrow">{MEAL_LABEL[meal]}</span>
+                    <span className="t-micro" style={{ color: 'var(--text-low)', fontFamily: 'var(--font-mono)' }}>{kcal} kcal</span>
+                  </div>
+                  {items.map(entry => (
+                    <Card key={entry.id} padding={0} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 12px 12px 14px', minHeight: 64 }}>
+                      <div style={{ width: 40, height: 40, background: 'var(--bg-2)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <RingProgress progress={entry.calories / targets.calories} size={32} strokeWidth={3}>
+                          <span style={{ fontSize: 7, fontFamily: 'var(--font-mono)', color: 'var(--text-low)' }}>
+                            {Math.round(Math.min(entry.calories / targets.calories, 1) * 100)}
+                          </span>
+                        </RingProgress>
+                      </div>
+                      <div className="stack gap-3 flex-1 min-w-0">
+                        <span style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {entry.foodName}
+                        </span>
+                        <span className="t-micro" style={{ color: 'var(--text-low)' }}>
+                          ×{entry.quantity} · {Math.round(entry.calories)} kcal · {Math.round(entry.protein)}g P
+                          {entry.note && <em style={{ fontStyle: 'normal', color: 'var(--text-mid)' }}> · {entry.note}</em>}
+                        </span>
+                      </div>
+                      {openRowId === entry.id ? (
+                        <button className="btn-danger" onClick={() => handleDelete(entry.id)} disabled={deletingId === entry.id}>
+                          <TrashIcon width={14} height={14} />
+                        </button>
+                      ) : (
+                        <button className="btn-icon" onClick={() => setOpenRowId(entry.id)}>
+                          <MoreIcon width={16} height={16} />
+                        </button>
+                      )}
+                    </Card>
+                  ))}
                 </div>
-
-                {/* Info */}
-                <div className="stack gap-3 flex-1 min-w-0">
-                  <span style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {entry.foodName}
-                  </span>
-                  <span className="t-micro" style={{ color: 'var(--text-low)' }}>
-                    ×{entry.quantity} · {Math.round(entry.calories)} kcal · {Math.round(entry.protein)}g P
-                    {entry.note && <em style={{ fontStyle: 'normal', color: 'var(--text-mid)' }}> · {entry.note}</em>}
-                  </span>
-                </div>
-
-                {/* Actions */}
-                {openRowId === entry.id ? (
-                  <button
-                    className="btn-danger"
-                    onClick={() => handleDelete(entry.id)}
-                    disabled={deletingId === entry.id}
-                  >
-                    <TrashIcon width={14} height={14} />
-                  </button>
-                ) : (
-                  <button className="btn-icon" onClick={() => setOpenRowId(entry.id)}>
-                    <MoreIcon width={16} height={16} />
-                  </button>
-                )}
-              </Card>
-            ))}
+              )
+            })}
           </div>
         )}
       </section>

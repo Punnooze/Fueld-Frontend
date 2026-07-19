@@ -11,7 +11,10 @@ export interface LogEntry {
   fat: number
   date: string
   note?: string
+  meal: string
 }
+
+export type Meal = 'breakfast' | 'lunch' | 'dinner' | 'other'
 
 export interface WeekDay {
   date: string
@@ -24,6 +27,7 @@ export interface CreateLogPayload {
   quantity: number
   date: string
   note?: string
+  meal?: string
 }
 
 const normalizeEntry = (raw: Record<string, unknown>): LogEntry => {
@@ -62,6 +66,7 @@ const normalizeEntry = (raw: Record<string, unknown>): LogEntry => {
     fat: resolve('fat', 'fat'),
     date: String(raw.date ?? '').slice(0, 10),
     note: raw.note ? String(raw.note) : undefined,
+    meal: String(raw.meal ?? 'other'),
   }
 }
 

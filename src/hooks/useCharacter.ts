@@ -9,7 +9,7 @@ export const useRecords = () =>
 // ponytail: TEMP rank preview. Set PREVIEW_TIER to 0..6 to force-view a rank,
 // or null to use the real DB rank. Applied via `select` so it transforms even
 // cached data instantly (no refetch). REMOVE before shipping.
-const PREVIEW_TIER: number | null = 6
+const PREVIEW_TIER: number | null = null
 const RANKS = [
   { name: 'RECRUIT', minLevel: 1 }, { name: 'SOLDIER', minLevel: 5 },
   { name: 'VETERAN', minLevel: 10 }, { name: 'WARRIOR', minLevel: 15 },

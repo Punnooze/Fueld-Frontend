@@ -4,7 +4,7 @@ import { CheckIcon } from '../assets/icons'
 import { Eyebrow } from './ui/Eyebrow'
 import { BottomSheet } from './BottomSheet'
 import { QuestBadge } from './QuestBadge'
-import { QUEST_TYPE_COLOR, questFlavor } from '../utils/quests'
+import { questFlavor } from '../utils/quests'
 import styles from './QuestList.module.css'
 
 const TYPE_LABEL: Record<Quest['type'], string> = {
@@ -14,8 +14,7 @@ const TYPE_LABEL: Record<Quest['type'], string> = {
 }
 const ORDER: Quest['type'][] = ['daily', 'weekly', 'boss']
 
-const QuestRow = ({ q, onOpen }: { q: Quest; onOpen: (q: Quest) => void }) => {
-  const color = QUEST_TYPE_COLOR[q.type]
+const QuestRow = ({ q, onOpen, color }: { q: Quest; onOpen: (q: Quest) => void; color: string }) => {
   const pct = Math.min((q.currentValue / q.targetValue) * 100, 100)
   return (
     <button
@@ -46,44 +45,51 @@ const QuestRow = ({ q, onOpen }: { q: Quest; onOpen: (q: Quest) => void }) => {
   )
 }
 
-export const QuestList = ({ quests, accent = 'var(--accent)' }: { quests: Quest[]; accent?: string }) => {
+export const QuestList = ({
+  quests,
+  accent = 'var(--accent)',
+  types,
+  showSummary = true,
+}: {
+  quests: Quest[]
+  accent?: string
+  types?: Quest['type'][]
+  showSummary?: boolean
+}) => {
   const [sel, setSel] = useState<Quest | null>(null)
-  const groups = ORDER
+  const visible = types ? ORDER.filter(t => types.includes(t)) : ORDER
+  const groups = visible
     .map(type => ({ type, items: quests.filter(q => q.type === type) }))
     .filter(g => g.items.length > 0)
 
   const doneAll = quests.filter(q => q.completed).length
   const xpAvail = quests.filter(q => !q.completed).reduce((s, q) => s + q.xpReward, 0)
-  const color = sel ? QUEST_TYPE_COLOR[sel.type] : 'var(--accent)'
+  const color = accent
   const pct = sel ? Math.min((sel.currentValue / sel.targetValue) * 100, 100) : 0
 
   return (
     <div className="stack gap-16">
       {/* summary header */}
+      {showSummary && (
       <div className={styles.summary} style={{ border: `1px solid ${accent}2e`, borderLeft: `3px solid ${accent}` }}>
         <div className="stack gap-2">
           <span className="t-eyebrow">Quests</span>
           <span className="t-micro" style={{ color: 'var(--text-low)' }}>{doneAll}/{quests.length} complete</span>
         </div>
         <div className="stack gap-2" style={{ alignItems: 'flex-end' }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 18, color: 'var(--accent)' }}>+{xpAvail.toLocaleString()}</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 18, color: accent }}>+{xpAvail.toLocaleString()}</span>
           <span className="t-micro" style={{ color: 'var(--text-low)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>XP up for grabs</span>
         </div>
       </div>
+      )}
 
       {groups.map(g => {
         const done = g.items.filter(q => q.completed).length
-        const c = QUEST_TYPE_COLOR[g.type]
         return (
           <section key={g.type}>
-            <Eyebrow right={`${done}/${g.items.length}`}>
-              <span className="row gap-6" style={{ display: 'inline-flex', alignItems: 'center' }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: c }} />
-                {TYPE_LABEL[g.type]}
-              </span>
-            </Eyebrow>
+            <Eyebrow right={`${done}/${g.items.length}`}>{TYPE_LABEL[g.type]}</Eyebrow>
             <div className="stack gap-8">
-              {g.items.map(q => <QuestRow key={q.id} q={q} onOpen={setSel} />)}
+              {g.items.map(q => <QuestRow key={q.id} q={q} onOpen={setSel} color={accent} />)}
             </div>
           </section>
         )

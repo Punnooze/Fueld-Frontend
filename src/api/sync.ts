@@ -25,6 +25,12 @@ export const syncHealth = async (): Promise<void> => {
   await client.get('/health/sync')
 }
 
+// distinct dates (YYYY-MM-DD) that earned a cardio XP event — used to mark the calendar
+export const getCardioDates = async (): Promise<string[]> => {
+  const { data } = await client.get<string[]>('/xp/dates', { params: { type: 'cardio' } })
+  return data ?? []
+}
+
 export const getHealthToday = async (dateOverride?: string): Promise<HealthToday | null> => {
   try {
     // send local civil date so steps match the device's day (tz-safe)

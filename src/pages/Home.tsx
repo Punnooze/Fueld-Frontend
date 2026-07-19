@@ -13,6 +13,7 @@ import { SettingsModal } from '../components/SettingsModal'
 import { HealthRings } from '../components/HealthRings'
 import { HealthStats } from '../components/HealthStats'
 import { TodayTrainingCard } from '../components/TodayTraining'
+import { Eyebrow } from '../components/ui/Eyebrow'
 import { FAB } from '../components/FAB'
 import { Reveal } from '../components/Reveal'
 import { RankInsignia } from '../components/RankInsignia'
@@ -111,42 +112,46 @@ export const Home = () => {
         </div>
       </header>
 
-      <div className="px stack gap-24">
+      <div className="px stack gap-20" style={{ gap: 28 }}>
         {isError && <p style={{ color: 'var(--danger)', fontSize: 14, padding: '24px 0' }}>Couldn't load your fighter.</p>}
 
-        {character && (
-          <>
-            <LevelUpOverlay character={character} />
-            <StreakBreakOverlay character={character} />
+        {character && (() => {
+          const rc = rankColor(character.rankTier)
+          return (
+            <>
+              <LevelUpOverlay character={character} />
+              <StreakBreakOverlay character={character} />
 
-            {/* 1. Recovery / rings */}
-            {health && (health.steps || health.sleepHours || health.restingHeartRate) && (
-              <Reveal delay={0}>
-                <HealthRings
-                  data={health}
-                  stepTarget={settings?.stepTarget ?? 10000}
-                  sleepTarget={settings?.sleepTarget ?? 8}
-                  accent={rankColor(character.rankTier)}
-                />
+              {/* 1. Fighter card */}
+              <Reveal delay={0}><FighterCardCombat character={character} /></Reveal>
+              <Reveal delay={50}><p className={styles.attitude} style={{ borderLeftColor: rc }}>{attitude(character)}</p></Reveal>
+
+              {/* 2. Google Health — recovery + vitals */}
+              {health && (health.steps || health.sleepHours || health.restingHeartRate) && (
+                <Reveal delay={90}>
+                  <HealthRings data={health} stepTarget={settings?.stepTarget ?? 10000} sleepTarget={settings?.sleepTarget ?? 8} accent={rc} />
+                </Reveal>
+              )}
+              {health && (health.restingHeartRate || health.hrv || health.weightKg) && (
+                <Reveal delay={120}><HealthStats data={health} accent={rc} /></Reveal>
+              )}
+
+              {/* 3. Workouts (above quests) */}
+              <Reveal delay={150}>
+                <section>
+                  <Eyebrow>Today's Training</Eyebrow>
+                  <TodayTrainingCard />
+                </section>
               </Reveal>
-            )}
 
-            {/* 2. Fighter card → profile */}
-            <Reveal delay={60}><FighterCardCombat character={character} /></Reveal>
+              {/* 4. Daily quests */}
+              <Reveal delay={180}><QuestList quests={quests} accent={rc} types={['daily']} /></Reveal>
 
-            {/* 3. Vitals strip (below the card) */}
-            {health && (health.restingHeartRate || health.hrv || health.weightKg) && (
-              <Reveal delay={100}><HealthStats data={health} accent={rankColor(character.rankTier)} /></Reveal>
-            )}
-
-            <Reveal delay={120}><TodayTrainingCard /></Reveal>
-
-            <Reveal delay={140}><p className={styles.attitude} style={{ borderLeftColor: rankColor(character.rankTier) }}>{attitude(character)}</p></Reveal>
-
-            {/* 4. Quests */}
-            <Reveal delay={170}><QuestList quests={quests} accent={rankColor(character.rankTier)} /></Reveal>
-          </>
-        )}
+              {/* 5. Weekly + boss quests */}
+              <Reveal delay={210}><QuestList quests={quests} accent={rc} types={['weekly', 'boss']} showSummary={false} /></Reveal>
+            </>
+          )
+        })()}
       </div>
 
       <FAB onClick={() => navigate('/log')} label="Log fuel" />
