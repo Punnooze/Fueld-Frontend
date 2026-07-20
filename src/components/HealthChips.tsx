@@ -1,11 +1,12 @@
 import type { HealthToday } from '../api/sync'
 import { FootprintIcon, HeartIcon, ScaleIcon, LeafIcon, StreakIcon } from '../assets/icons'
+import { fmtSleepHM } from '../utils/dates'
 import styles from './HealthChips.module.css'
 
 export const HealthChips = ({ data }: { data: HealthToday }) => {
   const chips = [
     { icon: FootprintIcon, value: data.steps != null ? data.steps.toLocaleString() : '—', label: 'steps' },
-    { icon: LeafIcon, value: data.sleepHours != null ? `${data.sleepHours}h` : '—', label: 'sleep' },
+    { icon: LeafIcon, value: fmtSleepHM(data.sleepHours), label: 'sleep' },
     { icon: HeartIcon, value: data.restingHeartRate ?? '—', label: 'resting bpm' },
     { icon: StreakIcon, value: data.hrv ?? '—', label: 'hrv ms' },
     { icon: ScaleIcon, value: data.weightKg != null ? `${data.weightKg}` : '—', label: 'kg' },

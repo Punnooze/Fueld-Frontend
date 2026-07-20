@@ -30,6 +30,13 @@ export interface CreateLogPayload {
   meal?: string
 }
 
+export interface UpdateLogPayload {
+  quantity?: number
+  meal?: string
+  note?: string
+  date?: string
+}
+
 const normalizeEntry = (raw: Record<string, unknown>): LogEntry => {
   const quantity = Number(raw.quantity ?? 1)
 
@@ -102,6 +109,10 @@ export const getLogHistory = async (startDate: string, endDate: string): Promise
     ? Object.values(data as Record<string, unknown[]>).flat()
     : []
   return entries.map(e => normalizeEntry(e as Record<string, unknown>))
+}
+
+export const updateLog = async (id: string, patch: UpdateLogPayload): Promise<void> => {
+  await client.put(`/logs/${id}`, patch)
 }
 
 export const deleteLog = async (id: string): Promise<void> => {

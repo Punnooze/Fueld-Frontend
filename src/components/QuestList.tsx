@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Quest } from '../api/quests'
-import { CheckIcon } from '../assets/icons'
+import { CheckIcon, TrophyIcon } from '../assets/icons'
 import { Eyebrow } from './ui/Eyebrow'
 import { BottomSheet } from './BottomSheet'
 import { QuestBadge } from './QuestBadge'
@@ -23,24 +23,22 @@ const QuestRow = ({ q, onOpen, color }: { q: Quest; onOpen: (q: Quest) => void; 
       style={{ borderColor: q.completed ? color : 'var(--line)', borderLeft: `3px solid ${color}` }}
     >
       <QuestBadge questKey={q.key} color={color} size={44} earned={q.completed} />
-      <div className="stack gap-4 flex-1 min-w-0">
-        <div className="between">
-          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{q.title}</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color, flexShrink: 0, marginLeft: 8 }}>+{q.xpReward}</span>
-        </div>
+      <div className="stack gap-6 flex-1 min-w-0">
+        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-hi)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{q.title}</span>
         {q.completed ? (
           <span className="row gap-4" style={{ color, fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
             <CheckIcon width={12} height={12} /> Badge earned
           </span>
         ) : (
-          <div className="row gap-8">
+          <div className="row gap-8" style={{ alignItems: 'center' }}>
             <div style={{ flex: 1, height: 4, borderRadius: 'var(--r-pill)', background: 'var(--bg-3)', overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 'var(--r-pill)', transition: 'width 600ms var(--ease)' }} />
             </div>
-            <span className="t-micro" style={{ color: 'var(--text-low)', fontFamily: 'var(--font-mono)' }}>{q.currentValue}/{q.targetValue}</span>
+            <span className="t-micro" style={{ color: 'var(--text-low)', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>{q.currentValue}/{q.targetValue}</span>
           </div>
         )}
       </div>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color, flexShrink: 0, marginLeft: 4, alignSelf: 'center' }}>+{q.xpReward}</span>
     </button>
   )
 }
@@ -70,18 +68,32 @@ export const QuestList = ({
   return (
     <div className="stack gap-16">
       {/* summary header */}
-      {showSummary && (
-      <div className={styles.summary} style={{ border: `1px solid ${accent}2e`, borderLeft: `3px solid ${accent}` }}>
-        <div className="stack gap-2">
-          <span className="t-eyebrow">Quests</span>
-          <span className="t-micro" style={{ color: 'var(--text-low)' }}>{doneAll}/{quests.length} complete</span>
-        </div>
-        <div className="stack gap-2" style={{ alignItems: 'flex-end' }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 18, color: accent }}>+{xpAvail.toLocaleString()}</span>
-          <span className="t-micro" style={{ color: 'var(--text-low)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>XP up for grabs</span>
-        </div>
-      </div>
-      )}
+      {showSummary && (() => {
+        const donePct = quests.length ? Math.round((doneAll / quests.length) * 100) : 0
+        return (
+          <div className={styles.summary} style={{ flexDirection: 'column', alignItems: 'stretch', gap: 12, border: `1px solid ${accent}2e`, borderLeft: `3px solid ${accent}` }}>
+            <div className="between" style={{ alignItems: 'flex-end' }}>
+              <div className="stack gap-2">
+                <span className="row gap-6" style={{ alignItems: 'center' }}>
+                  <TrophyIcon width={14} height={14} style={{ color: accent }} />
+                  <span className="t-eyebrow">Quests</span>
+                </span>
+                <span style={{ fontFamily: 'var(--font-mega)', fontSize: 30, fontWeight: 600, color: accent, lineHeight: 0.9 }}>
+                  {doneAll}<span style={{ fontSize: 16, color: 'var(--text-low)' }}>/{quests.length}</span>
+                  <span className="t-micro" style={{ marginLeft: 8, color: 'var(--text-low)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>complete</span>
+                </span>
+              </div>
+              <div className="stack gap-2" style={{ alignItems: 'flex-end' }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 20, color: accent }}>+{xpAvail.toLocaleString()}</span>
+                <span className="t-micro" style={{ color: 'var(--text-low)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>XP up for grabs</span>
+              </div>
+            </div>
+            <div style={{ height: 8, borderRadius: 'var(--r-pill)', background: 'var(--bg-3)', overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${Math.max(donePct, 2)}%`, background: accent, borderRadius: 'var(--r-pill)', boxShadow: `0 0 10px ${accent}`, transition: 'width 700ms var(--ease)' }} />
+            </div>
+          </div>
+        )
+      })()}
 
       {groups.map(g => {
         const done = g.items.filter(q => q.completed).length

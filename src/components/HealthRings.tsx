@@ -1,6 +1,7 @@
 import type { HealthToday } from '../api/sync'
 import { RingProgress } from './RingProgress'
 import { useCountUp } from '../hooks/useCountUp'
+import { fmtSleepHM } from '../utils/dates'
 
 interface Props {
   data: HealthToday
@@ -53,7 +54,7 @@ export const HealthRings = ({ data, stepTarget, sleepTarget, accent = 'var(--acc
           </div>
           <div className="stack gap-6" style={{ alignItems: 'center' }}>
             <RingProgress progress={sleep / sleepTarget} size={92} strokeWidth={16} color={accent} loopArrow animate>
-              <span style={{ fontFamily: 'var(--font-mega)', fontSize: 22, fontWeight: 600, color: 'var(--text-hi)', lineHeight: 0.9 }}>{sleepUp.toFixed(1)}<span style={{ fontSize: 12 }}>h</span></span>
+              <span style={{ fontFamily: 'var(--font-mega)', fontSize: 17, fontWeight: 600, color: 'var(--text-hi)', lineHeight: 0.9, whiteSpace: 'nowrap' }}>{fmtSleepHM(sleepUp)}</span>
             </RingProgress>
             <span className="t-micro" style={{ color: 'var(--text-mid)', letterSpacing: '0.12em' }}>SLEEP</span>
           </div>

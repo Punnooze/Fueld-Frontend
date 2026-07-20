@@ -87,7 +87,7 @@ export default function App() {
   return (
     <PersistQueryClientProvider
       client={queryClient}
-      persistOptions={{ persister, maxAge: 1000 * 60 * 60 * 24 }}
+      persistOptions={{ persister, maxAge: 1000 * 60 * 60 * 24, buster: 'cardio-sessions-v1' }}
     >
       <ToastProvider>
         <BrowserRouter>

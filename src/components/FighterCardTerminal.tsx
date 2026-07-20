@@ -55,7 +55,7 @@ export const FighterCardTerminal = ({ character: c }: { character: Character }) 
 
         {/* callsign */}
         <div style={{ marginBottom: 16 }}>
-          <span style={{ ...mono(11, 'var(--text-low)'), letterSpacing: '0.2em' }}>CALLSIGN</span>
+          <span style={{ ...mono(11, 'var(--text-low)'), letterSpacing: '0.2em' }}>NAME</span>
           <div style={{ fontFamily: 'var(--font-mega)', fontSize: 40, fontWeight: 600, color: 'var(--text-hi)', textTransform: 'uppercase', lineHeight: 0.9 }}>
             {c.name}
           </div>

@@ -36,3 +36,12 @@ export const getDayLabel = (date: Date): string => {
 export const formatShortDate = (date: Date): string => {
   return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 }
+
+/** Sleep hours → "7h 18m" (no rounding to whole hours). */
+export const fmtSleepHM = (hours?: number | null): string => {
+  if (hours == null) return '—'
+  const total = Math.round(hours * 60)
+  const h = Math.floor(total / 60)
+  const m = total % 60
+  return m ? `${h}h ${m}m` : `${h}h`
+}

@@ -6,6 +6,17 @@ export interface HevySyncResult {
   newPRs: string[]
 }
 
+export interface CardioSession {
+  type: string          // WALKING | SPORT | BIKING | RUNNING …
+  name: string          // display name e.g. "Walk"
+  durationMin?: number | null
+  calories?: number | null
+  distanceKm?: number | null
+  avgHr?: number | null
+  activeZoneMinutes?: number | null
+  startTime?: string
+}
+
 export interface HealthToday {
   steps?: number | null
   restingHeartRate?: number | null
@@ -14,6 +25,7 @@ export interface HealthToday {
   hrv?: number | null
   activeZoneMinutes?: number | null
   cardioMinutes?: number | null
+  cardioSessions?: CardioSession[]
 }
 
 export const syncHevy = async (): Promise<HevySyncResult> => {

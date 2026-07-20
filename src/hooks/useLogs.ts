@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getLogs, createLog, deleteLog, type CreateLogPayload, type LogEntry } from '../api/logs'
+import { getLogs, createLog, updateLog, deleteLog, type CreateLogPayload, type UpdateLogPayload, type LogEntry } from '../api/logs'
 import { getFoods } from '../api/foods'
 import { FOODS_KEY } from './useFoods'
 import type { FoodItem } from '../api/foods'
@@ -50,6 +50,19 @@ export const useCreateLog = (date: string) => {
       qc.invalidateQueries({ queryKey: ['character'] })
       qc.invalidateQueries({ queryKey: ['quests'] })
       qc.invalidateQueries({ queryKey: ['streak'] })
+    },
+  })
+}
+
+export const useUpdateLog = (date: string) => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: UpdateLogPayload }) => updateLog(id, patch),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: logsKey(date) })
+      qc.invalidateQueries({ queryKey: ['week'] })
+      qc.invalidateQueries({ queryKey: ['character'] })
+      qc.invalidateQueries({ queryKey: ['quests'] })
     },
   })
 }

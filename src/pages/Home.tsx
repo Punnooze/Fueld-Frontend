@@ -21,7 +21,7 @@ import { RankInsignia } from '../components/RankInsignia'
 import { useToast } from '../components/Toast'
 import type { Character } from '../api/character'
 import { rankColor } from '../utils/ranks'
-import { SettingsIcon } from '../assets/icons'
+import { SettingsIcon, ScaleIcon } from '../assets/icons'
 import LogoHeader from '../assets/brand/logo-header.svg?react'
 import styles from './Home.module.css'
 
@@ -134,37 +134,51 @@ export const Home = () => {
                   <HealthRings data={health} stepTarget={settings?.stepTarget ?? 10000} sleepTarget={settings?.sleepTarget ?? 8} accent={rc} />
                 </Reveal>
               )}
-              {health && (health.restingHeartRate || health.hrv || health.weightKg) && (
-                <Reveal delay={120}><HealthStats data={health} accent={rc} /></Reveal>
-              )}
-
-              {/* 2b. Goal-weight journey (only when a goal is set) */}
-              {journeyQ.data && (
-                <Reveal delay={135}>
-                  <button className="card" onClick={() => navigate('/body')}
-                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: 16, borderLeft: `3px solid ${rc}` }}>
-                    <div className="between" style={{ marginBottom: 10 }}>
-                      <span className="t-eyebrow">{journeyQ.data.reached ? '🎯 Goal Reached' : `Journey to ${journeyQ.data.goalWeight}kg`}</span>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 15, color: rc }}>{journeyQ.data.pct}%</span>
-                    </div>
-                    <div style={{ height: 8, borderRadius: 'var(--r-pill)', background: 'var(--bg-3)', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${journeyQ.data.pct}%`, background: rc, borderRadius: 'var(--r-pill)',
-                        boxShadow: journeyQ.data.pct > 0 ? `0 0 10px ${rc}` : 'none', transition: 'width 700ms var(--ease)' }} />
-                    </div>
-                    <span className="t-micro" style={{ display: 'block', marginTop: 8, color: 'var(--text-low)' }}>
-                      {journeyQ.data.currentWeight}kg now · {Math.max(0, journeyQ.data.remainingKg)}kg to go · +{Math.floor(journeyQ.data.bestKg) * 150} XP earned
-                    </span>
-                  </button>
-                </Reveal>
-              )}
-
-              {/* 3. Workouts (above quests) */}
-              <Reveal delay={150}>
+              {/* 2a. Today's training — above resting HR / HRV vitals */}
+              <Reveal delay={110}>
                 <section>
                   <Eyebrow>Today's Training</Eyebrow>
                   <TodayTrainingCard />
                 </section>
               </Reveal>
+
+              {/* 3. Resting HR / HRV / cardio / weight vitals */}
+              {health && (health.restingHeartRate || health.hrv || health.weightKg) && (
+                <Reveal delay={120}><HealthStats data={health} accent={rc} /></Reveal>
+              )}
+
+              {/* 2b. Goal-weight journey (only when a goal is set) — below HR/HRV */}
+              {journeyQ.data && (
+                <Reveal delay={135}>
+                  <button className="card" onClick={() => navigate('/body')}
+                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: 18, borderLeft: `3px solid ${rc}`, border: `1px solid ${rc}2e` }}>
+                    <div className="between" style={{ marginBottom: 12, alignItems: 'center' }}>
+                      <span className="row gap-8" style={{ alignItems: 'center' }}>
+                        <ScaleIcon width={15} height={15} style={{ color: rc }} />
+                        <span className="t-eyebrow">{journeyQ.data.reached ? '🎯 Goal Reached' : `Journey to ${journeyQ.data.goalWeight}kg`}</span>
+                      </span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 20, color: rc }}>{journeyQ.data.pct}%</span>
+                    </div>
+
+                    <div className="row" style={{ alignItems: 'baseline', gap: 6, marginBottom: 12 }}>
+                      <span style={{ fontFamily: 'var(--font-mega)', fontSize: 34, fontWeight: 600, color: 'var(--text-hi)', lineHeight: 0.9 }}>{journeyQ.data.currentWeight}</span>
+                      <span style={{ fontSize: 14, color: 'var(--text-low)' }}>kg</span>
+                      <span className="t-micro" style={{ marginLeft: 6, color: 'var(--text-low)' }}>· {Math.max(0, journeyQ.data.remainingKg)}kg to {journeyQ.data.losing ? 'lose' : 'gain'}</span>
+                    </div>
+
+                    <div style={{ height: 10, borderRadius: 'var(--r-pill)', background: 'var(--bg-3)', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${Math.max(journeyQ.data.pct, 1.5)}%`, background: rc, borderRadius: 'var(--r-pill)',
+                        boxShadow: `0 0 12px ${rc}`, transition: 'width 700ms var(--ease)' }} />
+                    </div>
+
+                    <div className="between" style={{ marginTop: 8 }}>
+                      <span className="t-micro" style={{ color: 'var(--text-low)' }}>{journeyQ.data.startWeight}kg start</span>
+                      <span className="t-micro" style={{ color: rc }}>+{Math.floor(journeyQ.data.bestKg) * 150} XP earned</span>
+                      <span className="t-micro" style={{ color: 'var(--text-low)' }}>{journeyQ.data.goalWeight}kg goal</span>
+                    </div>
+                  </button>
+                </Reveal>
+              )}
 
               {/* 4. Daily quests */}
               <Reveal delay={180}><QuestList quests={quests} accent={rc} types={['daily']} /></Reveal>

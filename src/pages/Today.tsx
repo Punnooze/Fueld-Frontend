@@ -1,21 +1,22 @@
 import { useState, useMemo } from 'react'
 import { useQueries } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { useLogs, useDeleteLog, logsKey } from '../hooks/useLogs'
+import { useLogs, useDeleteLog, useUpdateLog, logsKey } from '../hooks/useLogs'
 import { useStreak } from '../hooks/useStreak'
 import { useTargets } from '../hooks/useSettings'
 import { MacroBar } from '../components/MacroBar'
 import { RingProgress } from '../components/RingProgress'
 import { FAB } from '../components/FAB'
 import { SettingsModal } from '../components/SettingsModal'
+import { BottomSheet } from '../components/BottomSheet'
 import { useToast } from '../components/Toast'
 import { Card } from '../components/ui/Card'
 import { Eyebrow } from '../components/ui/Eyebrow'
 import { MetricNumber } from '../components/ui/MetricNumber'
-import { SettingsIcon, MoreIcon, TrashIcon, StreakIcon, ChevronRightIcon, MealsIcon } from '../assets/icons'
+import { SettingsIcon, MoreIcon, TrashIcon, EditIcon, StreakIcon, ChevronRightIcon, MealsIcon } from '../assets/icons'
 import { sumMacros } from '../utils/macros'
 import { today, formatDate } from '../utils/dates'
-import { getLogs } from '../api/logs'
+import { getLogs, type LogEntry, type Meal } from '../api/logs'
 import { useTodayStore } from '../store/todayStore'
 import LogoHeader from '../assets/brand/logo-header.svg?react'
 import EmptyLog from '../assets/illustrations/empty-log.svg?react'
@@ -44,9 +45,15 @@ export const Today = () => {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [openRowId, setOpenRowId]       = useState<string | null>(null)
   const [deletingId, setDeletingId]     = useState<string | null>(null)
+  const [editing, setEditing]           = useState<LogEntry | null>(null)
+  const [editQty, setEditQty]           = useState('1')
+  const [editMeal, setEditMeal]         = useState<Meal>('other')
+  const [editNote, setEditNote]         = useState('')
+  const [saving, setSaving]             = useState(false)
 
   const { data: logs = [], isLoading, isError } = useLogs(selectedDate)
   const deleteLog = useDeleteLog(selectedDate)
+  const updateLog = useUpdateLog(selectedDate)
   const { data: streak = 0 } = useStreak()
   const targets = useTargets()
   const { showToast } = useToast()
@@ -124,6 +131,30 @@ export const Today = () => {
     } finally {
       setDeletingId(null)
       setOpenRowId(null)
+    }
+  }
+
+  const openEdit = (entry: LogEntry) => {
+    setEditing(entry)
+    setEditQty(String(entry.quantity))
+    setEditMeal((entry.meal || 'other') as Meal)
+    setEditNote(entry.note ?? '')
+    setOpenRowId(null)
+  }
+
+  const handleSave = async () => {
+    if (!editing) return
+    const qty = parseFloat(editQty)
+    if (!qty || qty <= 0) { showToast('Enter a valid quantity', 'error'); return }
+    setSaving(true)
+    try {
+      await updateLog.mutateAsync({ id: editing.id, patch: { quantity: qty, meal: editMeal, note: editNote.trim() } })
+      showToast('Entry updated')
+      setEditing(null)
+    } catch {
+      showToast('Failed to update', 'error')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -318,9 +349,14 @@ export const Today = () => {
                         </span>
                       </div>
                       {openRowId === entry.id ? (
-                        <button className="btn-danger" onClick={() => handleDelete(entry.id)} disabled={deletingId === entry.id}>
-                          <TrashIcon width={14} height={14} />
-                        </button>
+                        <div className="row gap-6" style={{ flexShrink: 0 }}>
+                          <button className="btn-icon" onClick={() => openEdit(entry)} aria-label="Edit">
+                            <EditIcon width={15} height={15} />
+                          </button>
+                          <button className="btn-danger" onClick={() => handleDelete(entry.id)} disabled={deletingId === entry.id} aria-label="Delete">
+                            <TrashIcon width={14} height={14} />
+                          </button>
+                        </div>
                       ) : (
                         <button className="btn-icon" onClick={() => setOpenRowId(entry.id)}>
                           <MoreIcon width={16} height={16} />
@@ -337,6 +373,49 @@ export const Today = () => {
 
       <FAB onClick={() => navigate(`/log?date=${selectedDate}`)} label="Log food" />
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+
+      <BottomSheet open={!!editing} onClose={() => setEditing(null)} title={`Edit · ${editing?.foodName ?? ''}`}>
+        {editing && (
+          <div className="stack gap-16" style={{ paddingBottom: 8 }}>
+            <div className="stack gap-6">
+              <span className="t-micro" style={{ color: 'var(--text-low)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Quantity (×)</span>
+              <input
+                type="number" inputMode="decimal" min="0.1" step="0.1" value={editQty}
+                onChange={e => setEditQty(e.target.value)}
+                style={{ width: '100%', padding: '12px 14px', fontSize: 16, fontFamily: 'var(--font-mono)', color: 'var(--text-hi)', background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 'var(--r-inner)' }}
+              />
+            </div>
+
+            <div className="stack gap-6">
+              <span className="t-micro" style={{ color: 'var(--text-low)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Meal</span>
+              <div className="row gap-6">
+                {MEAL_ORDER.map(m => (
+                  <button key={m} onClick={() => setEditMeal(m)}
+                    style={{ flex: 1, padding: '10px 0', fontSize: 12, fontWeight: 600, borderRadius: 'var(--r-inner)', textTransform: 'capitalize',
+                      background: editMeal === m ? 'var(--accent)' : 'var(--bg-2)',
+                      color: editMeal === m ? 'var(--bg-0)' : 'var(--text-mid)',
+                      border: `1px solid ${editMeal === m ? 'var(--accent)' : 'var(--line)'}` }}>
+                    {MEAL_LABEL[m]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="stack gap-6">
+              <span className="t-micro" style={{ color: 'var(--text-low)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Note</span>
+              <input
+                type="text" value={editNote} placeholder="optional"
+                onChange={e => setEditNote(e.target.value)}
+                style={{ width: '100%', padding: '12px 14px', fontSize: 15, color: 'var(--text-hi)', background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 'var(--r-inner)' }}
+              />
+            </div>
+
+            <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ width: '100%', height: 48 }}>
+              {saving ? 'Saving…' : 'Save changes'}
+            </button>
+          </div>
+        )}
+      </BottomSheet>
     </div>
   )
 }
