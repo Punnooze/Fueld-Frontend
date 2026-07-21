@@ -26,6 +26,7 @@ export interface HealthToday {
   activeZoneMinutes?: number | null
   cardioMinutes?: number | null
   cardioSessions?: CardioSession[]
+  caloriesBurned?: number | null
 }
 
 export const syncHevy = async (): Promise<HevySyncResult> => {
@@ -41,6 +42,21 @@ export const syncHealth = async (): Promise<void> => {
 export const getCardioDates = async (): Promise<string[]> => {
   const { data } = await client.get<string[]>('/xp/dates', { params: { type: 'cardio' } })
   return data ?? []
+}
+
+export const getStepsDates = async (): Promise<string[]> => {
+  const { data } = await client.get<string[]>('/xp/dates', { params: { type: 'steps_bonus' } })
+  return data ?? []
+}
+
+// Exercise calories burned per day for a range → { 'YYYY-MM-DD': kcal }
+export const getBurnedWeek = async (start: string, end: string): Promise<Record<string, number>> => {
+  try {
+    const { data } = await client.get<Record<string, number>>('/health/burned', { params: { start, end } })
+    return data ?? {}
+  } catch {
+    return {}
+  }
 }
 
 export const getHealthToday = async (dateOverride?: string): Promise<HealthToday | null> => {

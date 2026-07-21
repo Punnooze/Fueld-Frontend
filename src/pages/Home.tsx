@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCharacter } from '../hooks/useCharacter'
@@ -10,7 +10,6 @@ import { FighterCardCombat } from '../components/FighterCardCombat'
 import { QuestList } from '../components/QuestList'
 import { LevelUpOverlay } from '../components/LevelUpOverlay'
 import { StreakBreakOverlay } from '../components/StreakBreakOverlay'
-import { SettingsModal } from '../components/SettingsModal'
 import { HealthRings } from '../components/HealthRings'
 import { HealthStats } from '../components/HealthStats'
 import { TodayTrainingCard } from '../components/TodayTraining'
@@ -21,7 +20,7 @@ import { RankInsignia } from '../components/RankInsignia'
 import { useToast } from '../components/Toast'
 import type { Character } from '../api/character'
 import { rankColor } from '../utils/ranks'
-import { SettingsIcon, ScaleIcon } from '../assets/icons'
+import { ScaleIcon } from '../assets/icons'
 import LogoHeader from '../assets/brand/logo-header.svg?react'
 import styles from './Home.module.css'
 
@@ -40,7 +39,6 @@ export const Home = () => {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const { showToast } = useToast()
-  const [settingsOpen, setSettingsOpen] = useState(false)
   const charQ = useCharacter()
   const questsQ = useQuests()
   const settingsQ = useSettings()
@@ -108,9 +106,6 @@ export const Home = () => {
               </button>
             )
           })()}
-          <button className="btn-icon" onClick={() => setSettingsOpen(true)} aria-label="Settings">
-            <SettingsIcon width={20} height={20} />
-          </button>
         </div>
       </header>
 
@@ -191,7 +186,6 @@ export const Home = () => {
       </div>
 
       <FAB onClick={() => navigate('/log')} label="Log fuel" />
-      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   )
 }

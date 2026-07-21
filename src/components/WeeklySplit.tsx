@@ -23,7 +23,7 @@ function splitLabel(type: string): string {
   return type.slice(0, 5).toUpperCase()
 }
 
-export const WeeklySplit = ({ enabled = true }: { enabled?: boolean }) => {
+export const WeeklySplit = ({ enabled = true, bare = false }: { enabled?: boolean; bare?: boolean }) => {
   const week = useMemo(() => getWeekDates(), [])
   const weekStart = formatDate(week[0])
   const weekEnd = formatDate(week[6])
@@ -57,44 +57,60 @@ export const WeeklySplit = ({ enabled = true }: { enabled?: boolean }) => {
     : 'GONE SOFT · TOO MANY OFF'
   const restColor = restDays > 2 ? 'var(--danger)' : restDays <= 1 ? 'var(--accent)' : 'var(--carbs)'
 
+  const inner = (
+    <>
+      <div className={styles.week}>
+        {week.map((d, i) => {
+          const ds = formatDate(d)
+          const label = byDate.get(ds)
+          const isToday = ds === todayStr
+          const isSun = i === 6
+          const future = ds > todayStr
+          const rest = !label && (isSun || (!future))
+          return (
+            <div key={i} className={styles.day}>
+              <span className="t-micro" style={{ color: isToday ? 'var(--accent)' : 'var(--text-low)' }}>{DAY[i]}</span>
+              <div
+                className={styles.cell}
+                style={{
+                  background: label ? 'var(--accent)' : 'transparent',
+                  borderColor: isToday ? 'var(--accent)' : label ? 'var(--accent)' : 'var(--line)',
+                  color: label ? 'var(--accent-ink)' : 'var(--text-dim)',
+                }}
+              >
+                {label ? '' : isSun ? '✕' : rest ? '·' : ''}
+              </div>
+              <span className={styles.lbl} style={{ color: label ? 'var(--text-hi)' : 'var(--text-dim)' }}>
+                {label ?? (isSun ? 'REST' : rest ? 'rest' : '—')}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+
+      <div className="between" style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--line)' }}>
+        <span className="t-micro" style={{ color: gymColor, fontWeight: 700, letterSpacing: '0.06em' }}>{gymLine}</span>
+        <span className="t-micro" style={{ color: restColor, fontWeight: 700, letterSpacing: '0.06em' }}>{restLine}</span>
+      </div>
+    </>
+  )
+
+  if (bare) {
+    return (
+      <>
+        <div className="between" style={{ marginBottom: 12 }}>
+          <span className="t-eyebrow">This Week</span>
+          <span className="t-micro" style={{ color: 'var(--text-low)' }}>{gymDays}/{GYM_TARGET} gym</span>
+        </div>
+        {inner}
+      </>
+    )
+  }
+
   return (
     <section>
       <Eyebrow right={`${gymDays}/${GYM_TARGET} gym`}>This Week</Eyebrow>
-      <div className="card" style={{ padding: 16 }}>
-        <div className={styles.week}>
-          {week.map((d, i) => {
-            const ds = formatDate(d)
-            const label = byDate.get(ds)
-            const isToday = ds === todayStr
-            const isSun = i === 6
-            const future = ds > todayStr
-            const rest = !label && (isSun || (!future))
-            return (
-              <div key={i} className={styles.day}>
-                <span className="t-micro" style={{ color: isToday ? 'var(--accent)' : 'var(--text-low)' }}>{DAY[i]}</span>
-                <div
-                  className={styles.cell}
-                  style={{
-                    background: label ? 'var(--accent)' : 'transparent',
-                    borderColor: isToday ? 'var(--accent)' : label ? 'var(--accent)' : 'var(--line)',
-                    color: label ? 'var(--accent-ink)' : 'var(--text-dim)',
-                  }}
-                >
-                  {label ? '' : isSun ? '✕' : rest ? '·' : ''}
-                </div>
-                <span className={styles.lbl} style={{ color: label ? 'var(--text-hi)' : 'var(--text-dim)' }}>
-                  {label ?? (isSun ? 'REST' : rest ? 'rest' : '—')}
-                </span>
-              </div>
-            )
-          })}
-        </div>
-
-        <div className="between" style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--line)' }}>
-          <span className="t-micro" style={{ color: gymColor, fontWeight: 700, letterSpacing: '0.06em' }}>{gymLine}</span>
-          <span className="t-micro" style={{ color: restColor, fontWeight: 700, letterSpacing: '0.06em' }}>{restLine}</span>
-        </div>
-      </div>
+      <div className="card" style={{ padding: 16 }}>{inner}</div>
     </section>
   )
 }

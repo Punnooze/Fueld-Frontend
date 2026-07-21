@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useQueries } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { useLogs, useDeleteLog, useUpdateLog, logsKey } from '../hooks/useLogs'
 import { useStreak } from '../hooks/useStreak'
-import { useTargets } from '../hooks/useSettings'
+import { useTargets, useSettings } from '../hooks/useSettings'
+import { useHealthToday } from '../hooks/useHealthToday'
 import { MacroBar } from '../components/MacroBar'
 import { RingProgress } from '../components/RingProgress'
 import { FAB } from '../components/FAB'
@@ -14,7 +15,7 @@ import { Card } from '../components/ui/Card'
 import { Eyebrow } from '../components/ui/Eyebrow'
 import { MetricNumber } from '../components/ui/MetricNumber'
 import { SettingsIcon, MoreIcon, TrashIcon, EditIcon, StreakIcon, ChevronRightIcon, MealsIcon } from '../assets/icons'
-import { sumMacros } from '../utils/macros'
+import { sumMacros, eatBack } from '../utils/macros'
 import { today, formatDate } from '../utils/dates'
 import { getLogs, type LogEntry, type Meal } from '../api/logs'
 import { useTodayStore } from '../store/todayStore'
@@ -116,9 +117,36 @@ export const Today = () => {
     return d < maxFuture
   }, [weekDays, maxFuture])
 
+  const goWeek = (delta: number) =>
+    setWeekAnchor(prev => { const n = new Date(prev); n.setDate(n.getDate() + delta * 7); return n })
+
+  // Swipe the week strip to change weeks. stopPropagation so the app-level
+  // tab-switch swipe (SwipeTabs) never fires from a strip gesture.
+  const swipe = useRef<{ x: number; y: number } | null>(null)
+  const onStripTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0]
+    swipe.current = { x: t.clientX, y: t.clientY }
+    e.stopPropagation()
+  }
+  const onStripTouchEnd = (e: React.TouchEvent) => {
+    e.stopPropagation()
+    const s = swipe.current; swipe.current = null
+    if (!s) return
+    const t = e.changedTouches[0]
+    const dx = t.clientX - s.x, dy = t.clientY - s.y
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return
+    if (dx < 0 && canGoForward) goWeek(1)
+    else if (dx > 0 && canGoBack) goWeek(-1)
+  }
+
+  const { data: settings } = useSettings()
+  const dayHealth = useHealthToday(!!settings?.googleHealthConnected, selectedDate).data
+  const activityBonus = eatBack(dayHealth?.caloriesBurned) // 50% of burned, eaten back
+  const budget = targets.calories + activityBonus
+
   const totals    = sumMacros(logs)
-  const remaining = targets.calories - totals.calories
-  const progress  = Math.min(totals.calories / targets.calories, 1)
+  const remaining = budget - totals.calories
+  const progress  = Math.min(totals.calories / budget, 1)
   const isOver    = remaining < 0
 
   const handleDelete = async (id: string) => {
@@ -175,12 +203,17 @@ export const Today = () => {
         </div>
       </header>
 
-      {/* ── Week strip ── */}
-      <div className={styles.weekStripWrap}>
+      {/* ── Week strip (swipe to change weeks) ── */}
+      <div
+        className={styles.weekStripWrap}
+        onTouchStart={onStripTouchStart}
+        onTouchEnd={onStripTouchEnd}
+        style={{ touchAction: 'pan-y' }}
+      >
         <button
           className={`btn-icon ${styles.chevron}`}
           disabled={!canGoBack}
-          onClick={() => setWeekAnchor(prev => { const n = new Date(prev); n.setDate(n.getDate() - 7); return n })}
+          onClick={() => goWeek(-1)}
           aria-label="Previous week"
         >
           <ChevronRightIcon width={18} height={18} style={{ transform: 'rotate(180deg)' }} />
@@ -237,7 +270,7 @@ export const Today = () => {
         <button
           className={`btn-icon ${styles.chevron}`}
           disabled={!canGoForward}
-          onClick={() => setWeekAnchor(prev => { const n = new Date(prev); n.setDate(n.getDate() + 7); return n })}
+          onClick={() => goWeek(1)}
           aria-label="Next week"
         >
           <ChevronRightIcon width={18} height={18} />
@@ -267,10 +300,15 @@ export const Today = () => {
                 <MetricNumber size="xl" color={isOver ? 'var(--danger)' : 'var(--accent)'}>
                   {Math.abs(Math.round(remaining))}
                 </MetricNumber>
-                <span className="t-eyebrow">{isOver ? 'Over Target' : 'Kcal Left'}</span>
+                <span className="t-eyebrow">{isOver ? 'Over Budget' : 'Kcal Left'}</span>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-low)' }}>
-                  {Math.round(totals.calories)} / {targets.calories} kcal
+                  {Math.round(totals.calories)} / {budget} kcal
                 </span>
+                {activityBonus > 0 && (
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent)', background: 'var(--accent-dim, rgba(200,241,53,0.12))', padding: '2px 8px', borderRadius: 'var(--r-pill)' }}>
+                    +{activityBonus} from activity
+                  </span>
+                )}
               </div>
             </RingProgress>
 

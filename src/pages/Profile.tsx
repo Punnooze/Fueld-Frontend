@@ -1,14 +1,17 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCharacter } from '../hooks/useCharacter'
 import { useXp } from '../hooks/useXp'
 import { FighterCardCombat } from '../components/FighterCardCombat'
 import { BadgeGrid } from '../components/BadgeGrid'
 import { CharacterPanels } from '../components/CharacterPanels'
+import { SettingsModal } from '../components/SettingsModal'
 import { Reveal } from '../components/Reveal'
-import { ChevronRightIcon } from '../assets/icons'
+import { ChevronRightIcon, SettingsIcon } from '../assets/icons'
 
 export const Profile = () => {
   const navigate = useNavigate()
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const { data: c, isLoading } = useCharacter()
   const { data: events = [] } = useXp(100)
 
@@ -19,8 +22,12 @@ export const Profile = () => {
           <ChevronRightIcon width={20} height={20} style={{ transform: 'rotate(180deg)' }} />
         </button>
         <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, letterSpacing: '0.3em', color: 'var(--text-mid)' }}>PROFILE</span>
-        <span style={{ width: 32 }} />
+        <button className="btn-icon" onClick={() => setSettingsOpen(true)} aria-label="Settings">
+          <SettingsIcon width={20} height={20} />
+        </button>
       </header>
+
+      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
       {isLoading || !c ? (
         <div className="px" style={{ marginTop: 16 }}>

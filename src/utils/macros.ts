@@ -31,3 +31,9 @@ export const sumMacros = (entries: LogEntry[]): MacroTotals => {
 
 export const clamp = (value: number, min: number, max: number): number =>
   Math.min(Math.max(value, min), max)
+
+// Only part of device "calories burned" is eaten back / counts toward budget —
+// active-calorie estimates run high. 50% (user-set).
+export const BURN_FACTOR = 0.5
+export const eatBack = (burned?: number | null): number =>
+  Math.round((burned ?? 0) * BURN_FACTOR)

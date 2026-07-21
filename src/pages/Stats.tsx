@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getLogHistory } from '../api/logs'
+import { getBurnedWeek } from '../api/sync'
+import { eatBack } from '../utils/macros'
 import { CalorieTrendGraph } from '../components/CalorieTrendGraph'
 import { SkeletonCard } from '../components/SkeletonCard'
 import { RingProgress } from '../components/RingProgress'
@@ -13,7 +15,7 @@ import { useRecords, useCharacter } from '../hooks/useCharacter'
 import { XpTrendGraph } from '../components/XpTrendGraph'
 import { RecordsGrid } from '../components/RecordsGrid'
 import { rankColor } from '../utils/ranks'
-import { formatDate } from '../utils/dates'
+import { formatDate, getWeekDates } from '../utils/dates'
 import { ChevronDownIcon, TrophyIcon, StreakIcon } from '../assets/icons'
 import EmptyStats from '../assets/illustrations/empty-stats.svg?react'
 import DiagonalStripe from '../assets/decor/diagonal-stripe.svg?react'
@@ -65,6 +67,29 @@ export const Stats = () => {
     acc[e.date].fat     += e.fat     ?? 0
     return acc
   }, {})
+
+  // Weekly deficit (current Mon–today) — budget = target + 50% of burned;
+  // net = eaten − budget over TRACKED days. Negative = deficit (under budget).
+  const week = getWeekDates()
+  const weekStart = formatDate(week[0])
+  const { data: burnedWeek = {} } = useQuery({
+    queryKey: ['burned-week', weekStart],
+    queryFn: () => getBurnedWeek(weekStart, formatDate(week[6])),
+  })
+  let weekEaten = 0, weekBudget = 0, weekBurnedBack = 0, trackedDays = 0
+  for (const d of week) {
+    const ds = formatDate(d)
+    if (ds > todayStr) continue
+    const eaten = byDate[ds]?.cal
+    if (!eaten) continue // only days with tracked meals
+    const back = eatBack(burnedWeek[ds])
+    weekEaten += eaten
+    weekBudget += targets.calories + back
+    weekBurnedBack += back
+    trackedDays++
+  }
+  const weekExpected = weekBudget - weekBurnedBack // target × tracked days
+  const weekNet = weekEaten - weekBudget // <0 = deficit
 
   // Activity strip — last 7 days
   const activityDays = Array.from({ length: 7 }, (_, i) => {
@@ -178,6 +203,35 @@ export const Stats = () => {
               </div>
             ))}
           </div>
+
+          {/* Weekly deficit */}
+          <Card>
+            <Eyebrow right={<span style={{ color: 'var(--text-low)', fontSize: 11 }}>this week</span>}>Weekly Deficit</Eyebrow>
+            {trackedDays === 0 ? (
+              <p className="t-meta" style={{ color: 'var(--text-low)', padding: '8px 0' }}>Log meals to see your deficit.</p>
+            ) : (
+              <div className="stack gap-6" style={{ alignItems: 'center', paddingTop: 4 }}>
+                <MetricNumber size="xl" color={weekNet <= 0 ? 'var(--success)' : 'var(--danger)'}>
+                  {weekNet <= 0 ? '−' : '+'}{Math.abs(Math.round(weekNet)).toLocaleString()}
+                </MetricNumber>
+                <span className="t-eyebrow">{weekNet <= 0 ? 'kcal deficit' : 'kcal surplus'}</span>
+                <div className="stack gap-3" style={{ alignItems: 'center', marginTop: 2 }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-mid)' }}>
+                    Budget {weekBudget.toLocaleString()}
+                    <span style={{ color: 'var(--text-low)' }}> = {weekExpected.toLocaleString()} expected + </span>
+                    <span style={{ color: 'var(--accent)' }}>{weekBurnedBack.toLocaleString()} burned</span>
+                  </span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-mid)' }}>
+                    Consumed {weekEaten.toLocaleString()}
+                    <span style={{ color: 'var(--text-low)' }}> · {trackedDays}d tracked</span>
+                  </span>
+                </div>
+                {weekBurnedBack > 0 && (
+                  <span className="t-micro" style={{ color: 'var(--text-low)' }}>burned counted at 50%</span>
+                )}
+              </div>
+            )}
+          </Card>
 
           {/* XP progression */}
           <Card>
