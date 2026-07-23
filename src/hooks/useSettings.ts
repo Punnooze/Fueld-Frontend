@@ -27,6 +27,7 @@ export const useTargets = () => {
   const { data } = useSettings()
   return {
     calories: data?.targetCalories ?? DEFAULT_TARGETS.calories,
+    maintenance: data?.maintenanceCalories ?? 2600,
     protein: data?.targetProtein ?? DEFAULT_TARGETS.protein,
     carbs: data?.targetCarbs ?? DEFAULT_TARGETS.carbs,
     fat: data?.targetFat ?? DEFAULT_TARGETS.fat,

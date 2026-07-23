@@ -8,6 +8,7 @@ export interface Workout {
   intensity: string
   note?: string
   date: string
+  startedAt?: string // ISO — actual workout start time-of-day
   xpEarned: number
   totalVolume: number
   exercises: string[]
@@ -35,6 +36,7 @@ const normalize = (raw: Record<string, unknown>): Workout => ({
   intensity: String(raw.intensity ?? 'Medium'),
   note: raw.note ? String(raw.note) : undefined,
   date: String(raw.date ?? '').slice(0, 10),
+  startedAt: raw.startedAt ? String(raw.startedAt) : undefined,
   xpEarned: Number(raw.xpEarned ?? 0),
   totalVolume: Number(raw.totalVolume ?? 0),
   exercises: Array.isArray(raw.exercises) ? (raw.exercises as string[]) : [],

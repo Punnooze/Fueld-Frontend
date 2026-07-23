@@ -7,6 +7,7 @@ import { FAB } from '../components/FAB'
 import { Eyebrow } from '../components/ui/Eyebrow'
 import { useToast } from '../components/Toast'
 import EmptyMeals from '../assets/illustrations/empty-meals.svg?react'
+import { SearchIcon } from '../assets/icons'
 import type { FoodItem } from '../api/foods'
 
 interface FormState { name: string; calories: string; protein: string; carbs: string; fat: string }
@@ -47,12 +48,16 @@ export const Foods = () => {
   const { showToast } = useToast()
 
   const [activeTab, setActiveTab] = useState<Tab>('meal')
+  const [search, setSearch]       = useState('')
   const [sheet, setSheet]         = useState<SheetMode | null>(null)
   const [form, setForm]           = useState<FormState>(EMPTY_FORM)
   const [errors, setErrors]       = useState<Partial<FormState>>({})
 
-  const items = foods.filter(f => f.type === activeTab)
-  const isEmpty = !isLoading && !isError && items.length === 0
+  const tabItems = foods.filter(f => f.type === activeTab)
+  const q = search.trim().toLowerCase()
+  const items = q ? tabItems.filter(f => f.name.toLowerCase().includes(q)) : tabItems
+  const isEmpty = !isLoading && !isError && tabItems.length === 0
+  const noMatches = !isLoading && !isError && !isEmpty && items.length === 0
 
   const openAdd  = () => { setForm(EMPTY_FORM); setErrors({}); setSheet({ mode: 'add' }) }
   const openEdit = (food: FoodItem) => {
@@ -96,6 +101,23 @@ export const Foods = () => {
         <SegmentedControl options={TABS} value={activeTab} onChange={v => setActiveTab(v as Tab)} />
       </div>
 
+      {!isLoading && !isError && !isEmpty && (
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', margin: '0 var(--page-x) 16px' }}>
+          <span style={{ position: 'absolute', left: 16, color: 'var(--text-mid)', display: 'flex', pointerEvents: 'none' }}>
+            <SearchIcon width={18} height={18} />
+          </span>
+          <input
+            className="input"
+            type="search"
+            placeholder={activeTab === 'meal' ? 'Search meals…' : 'Search food items…'}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            autoComplete="off" autoCapitalize="off"
+            style={{ height: 52, paddingLeft: 46, borderRadius: 14, background: 'var(--bg-2)', fontSize: 15 }}
+          />
+        </div>
+      )}
+
       {isLoading && (
         <div className="stack gap-8 px">
           {[1, 2, 3].map(i => <div key={i} className="skeleton-row" style={{ height: 68 }} />)}
@@ -121,7 +143,13 @@ export const Foods = () => {
         </div>
       )}
 
-      {!isLoading && !isError && !isEmpty && (
+      {noMatches && (
+        <p className="t-meta" style={{ textAlign: 'center', padding: '24px 16px', color: 'var(--text-mid)' }}>
+          No {activeTab === 'meal' ? 'meals' : 'food items'} match “{search.trim()}”.
+        </p>
+      )}
+
+      {!isLoading && !isError && !isEmpty && !noMatches && (
         <div className="stack" style={{ padding: '0 var(--page-x)', gap: 24 }}>
           <div>
             <Eyebrow>Your {activeTab === 'meal' ? 'Meals' : 'Food'}</Eyebrow>

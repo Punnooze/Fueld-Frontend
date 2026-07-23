@@ -4,7 +4,7 @@ import { useWorkoutsRange } from '../hooks/useWorkouts'
 import { getCardioDates, getStepsDates, getHealthToday, type CardioSession } from '../api/sync'
 import { Eyebrow } from './ui/Eyebrow'
 import { ChevronRightIcon, DumbbellIcon, HeartIcon, FootprintIcon } from '../assets/icons'
-import { formatDate, today } from '../utils/dates'
+import { formatDate, today, fmtClock } from '../utils/dates'
 import styles from './WorkoutCalendar.module.css'
 
 const CARDIO = '#5A9EFF'
@@ -17,6 +17,7 @@ const cardioLabel = (s: CardioSession) =>
   s.name || (s.type ? s.type.charAt(0) + s.type.slice(1).toLowerCase() : 'Cardio')
 const cardioSub = (s: CardioSession) =>
   [
+    fmtClock(s.startTime) || null,
     s.durationMin != null ? `${s.durationMin}min` : null,
     s.activeZoneMinutes != null ? `${s.activeZoneMinutes} zone` : null,
     s.calories != null ? `${s.calories}kcal` : null,
@@ -100,29 +101,33 @@ export const WorkoutCalendar = ({ enabled = true, bare = false }: { enabled?: bo
           const selectable = has || cardio || steps
           const isToday = ds === todayStr
           const isSel = ds === selected
+          // fill tint keyed to the day's primary activity (gym > cardio > steps)
+          const tint = has ? 'rgba(200,241,53,0.16)' : cardio ? 'rgba(90,158,255,0.16)' : steps ? 'rgba(245,158,11,0.16)' : undefined
           return (
             <button
               key={i}
               className={styles.day}
               onClick={() => selectable && setSelected(isSel ? null : ds)}
-              style={{
-                position: 'relative',
-                overflow: 'hidden',
-                background: has ? 'var(--accent)' : 'transparent',
-                color: has ? 'var(--accent-ink)' : 'var(--text-mid)',
-                fontWeight: has || cardio ? 700 : 500,
-                border: isSel ? '2px solid var(--text-hi)' : isToday ? '1px solid var(--line)' : '2px solid transparent',
-                boxShadow: cardio ? `inset 0 0 0 2px ${CARDIO}` : undefined,
-                cursor: selectable ? 'pointer' : 'default',
-              }}
+              data-sel={isSel || undefined}
+              data-today={isToday || undefined}
+              style={{ cursor: selectable ? 'pointer' : 'default', background: isSel ? undefined : tint, color: selectable ? 'var(--text-hi)' : 'var(--text-low)', fontWeight: selectable ? 700 : 400 }}
             >
-              {day}
-              {steps && (
-                <span aria-label="10k steps" style={{ position: 'absolute', bottom: 4, left: '50%', transform: 'translateX(-50%)', width: '46%', height: 3.5, borderRadius: 'var(--r-pill)', background: STEPS, boxShadow: '0 0 0 1px rgba(0,0,0,0.5)', pointerEvents: 'none' }} />
-              )}
+              <span className={styles.dayNum}>{day}</span>
+              <span className={styles.dots}>
+                {has && <i style={{ background: 'var(--accent)' }} />}
+                {cardio && <i style={{ background: CARDIO }} />}
+                {steps && <i style={{ background: STEPS }} />}
+              </span>
             </button>
           )
         })}
+      </div>
+
+      {/* legend */}
+      <div className={styles.legend}>
+        <span><i style={{ background: 'var(--accent)' }} />Gym</span>
+        <span><i style={{ background: CARDIO }} />Cardio</span>
+        <span><i style={{ background: STEPS }} />10k steps</span>
       </div>
 
     </>
@@ -137,7 +142,7 @@ export const WorkoutCalendar = ({ enabled = true, bare = false }: { enabled?: bo
           <div className="stack gap-2 flex-1 min-w-0">
             <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-hi)' }}>{w.type}</span>
             <span className="t-micro" style={{ color: 'var(--text-low)' }}>
-              {w.totalVolume > 0 ? `${w.totalVolume.toLocaleString()}kg` : ''}{w.exercises.length ? ` · ${w.exercises.length} exercises` : ''}
+              {[fmtClock(w.startedAt) || null, w.totalVolume > 0 ? `${w.totalVolume.toLocaleString()}kg` : null, w.duration ? `${w.duration}min` : null, w.exercises.length ? `${w.exercises.length} exercises` : null].filter(Boolean).join(' · ')}
             </span>
           </div>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--accent)' }}>+{w.xpEarned}</span>

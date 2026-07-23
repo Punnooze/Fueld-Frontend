@@ -37,6 +37,14 @@ export const formatShortDate = (date: Date): string => {
   return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 }
 
+/** ISO timestamp → "7:04 AM" local time-of-day; '' if missing/invalid. */
+export const fmtClock = (iso?: string | null): string => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+}
+
 /** Sleep hours → "7h 18m" (no rounding to whole hours). */
 export const fmtSleepHM = (hours?: number | null): string => {
   if (hours == null) return '—'

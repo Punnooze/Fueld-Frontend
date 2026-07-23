@@ -297,6 +297,21 @@ input[type="date"]:focus { border-color: var(--accent); }
   0%, 100% { transform: scale(1); }
   50%      { transform: scale(1.012); }
 }
+/* Splash — indeterminate accent bar slides across track */
+@keyframes loadSlide {
+  0%   { transform: translateX(-120%); }
+  100% { transform: translateX(360%); }
+}
+/* Splash exit — zoom into the wordmark then fade */
+@keyframes splashZoom {
+  0%   { transform: scale(1);   opacity: 1; }
+  100% { transform: scale(9);   opacity: 0; }
+}
+@keyframes splashFade {
+  0%   { opacity: 1; }
+  60%  { opacity: 1; }
+  100% { opacity: 0; }
+}
 /* Decay — red pulse outline */
 @keyframes decayPulse {
   0%, 100% { box-shadow: 0 0 0 1px var(--danger), 0 0 0px rgba(229,72,77,0); }

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCharacter } from '../hooks/useCharacter'
@@ -35,6 +35,9 @@ function attitude(c: Character): string {
   return "Day 1 costs nothing. Day 100 costs everything you skip now."
 }
 
+// Module-scoped: true once the splash has played this page-load. Resets on full reload.
+let splashSeen = false
+
 export const Home = () => {
   const navigate = useNavigate()
   const qc = useQueryClient()
@@ -54,9 +57,24 @@ export const Home = () => {
 
   // wait for everything before revealing the page
   const booting =
-    // true || // ponytail: TEMP force loader for preview — remove
     charQ.isLoading || questsQ.isLoading || settingsQ.isLoading ||
     (googleConnected && healthQ.isLoading)
+
+  // Splash only on the app's first load — module flag survives route remounts,
+  // resets only on a full page reload. Navigating back to Home won't replay it.
+  const [splashGone, setSplashGone] = useState(() => splashSeen || !booting)
+  const [exiting, setExiting] = useState(false)
+  // Show FUELD for at least this long, even if data is cached/instant.
+  const [minElapsed, setMinElapsed] = useState(false)
+  useEffect(() => { setTimeout(() => setMinElapsed(true), 900) }, [])
+
+  useEffect(() => {
+    if (booting || !minElapsed) return
+    setExiting(true)
+    // No cleanup-clear: StrictMode double-mount would cancel it and never re-fire.
+    // setSplashGone is idempotent, so a stray extra timer is harmless.
+    setTimeout(() => { splashSeen = true; setSplashGone(true) }, 620)
+  }, [booting, minElapsed])
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('health') === 'connected') {
@@ -67,16 +85,36 @@ export const Home = () => {
     }
   }, [qc, showToast])
 
-  if (booting) {
+  if (!splashGone) {
     return (
-      <div className={`page ${styles.page}`} style={{ display: 'grid', placeItems: 'center', minHeight: '100vh' }}>
-        <span style={{
-          fontFamily: 'var(--font-mega)', fontSize: 88, fontWeight: 600,
-          letterSpacing: '0.02em', color: 'var(--text-hi)', lineHeight: 1,
-          animation: 'breathe 2.4s var(--ease) infinite',
+      <div className={`page ${styles.page}`} style={{
+        position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center',
+        background: 'var(--bg)',
+        animation: exiting ? 'splashFade 600ms var(--ease) forwards' : undefined,
+      }}>
+        <div style={{
+          display: 'grid', placeItems: 'center', gap: 22,
+          animation: exiting ? 'splashZoom 600ms var(--ease) forwards' : 'overlayFade 500ms var(--ease) both',
         }}>
-          FUEL<span style={{ color: 'var(--accent)' }}>D</span>
-        </span>
+          <span style={{
+            fontFamily: 'var(--font-mega)', fontSize: 88, fontWeight: 600,
+            letterSpacing: '0.02em', color: 'var(--text-hi)', lineHeight: 1,
+            animation: exiting ? undefined : 'breathe 2.4s var(--ease) infinite',
+          }}>
+            FUEL<span style={{ color: 'var(--accent)' }}>D</span>
+          </span>
+          <div style={{
+            width: 150, height: 3, borderRadius: 2, background: 'var(--bg-2)',
+            overflow: 'hidden', position: 'relative',
+            opacity: exiting ? 0 : 1, transition: 'opacity 200ms var(--ease)',
+          }}>
+            <div style={{
+              position: 'absolute', top: 0, bottom: 0, width: '35%', borderRadius: 2,
+              background: 'linear-gradient(90deg, transparent, var(--accent), transparent)',
+              animation: 'loadSlide 1.1s var(--ease) infinite',
+            }} />
+          </div>
+        </div>
       </div>
     )
   }

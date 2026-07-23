@@ -7,11 +7,12 @@ interface Props {
   target: number
   unit?: string
   color?: string
+  overOk?: boolean // over target isn't bad (e.g. protein) → never red
 }
 
-export const MacroBar = ({ label, current, target, unit = 'g', color = 'var(--accent)' }: Props) => {
+export const MacroBar = ({ label, current, target, unit = 'g', color = 'var(--accent)', overOk = false }: Props) => {
   const pct = clamp((current / target) * 100, 0, 100)
-  const over = current > target
+  const over = current > target && !overOk
 
   return (
     <div className={styles.wrap}>

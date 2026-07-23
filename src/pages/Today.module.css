@@ -12,8 +12,32 @@
 .weekStripWrap {
   display: flex;
   align-items: center;
-  gap: 4px;
   padding: 0 calc(var(--page-x) - 8px) 14px;
+}
+
+/* Pill container carries the bg + clips the fixed indicator */
+.stripPill {
+  position: relative;
+  flex: 1;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* Fixed picker indicator — dates scroll under it, centered date is selected */
+.centerIndicator {
+  position: absolute;
+  left: 50%;
+  top: 6px;
+  transform: translateX(-50%);
+  width: 48px;
+  height: 60px;
+  border: 1.5px solid var(--accent);
+  border-radius: 11px;
+  background: var(--bg-2);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .chevron {
@@ -24,17 +48,25 @@
 .chevron:disabled { opacity: 0.18; }
 
 .weekStrip {
-  flex: 1;
+  position: relative;
+  z-index: 1;
   display: flex;
   gap: 3px;
-  background: var(--bg-1);
-  border-radius: 16px;
-  padding: 6px 4px;
-  border: 1px solid var(--border);
+  padding-block: 6px;
+  /* Horizontal date slider: scroll one day at a time, snap-centered */
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  /* let the first & last day scroll to center */
+  padding-inline: calc(50% - 24px);
 }
+.weekStrip::-webkit-scrollbar { display: none; }
 
 .dayTile {
-  flex: 1;
+  flex: 0 0 48px;
+  scroll-snap-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -58,13 +90,14 @@
 /* ── Today: bold number ── */
 .dayIsToday .dayNum { font-weight: 700; }
 
-/* ── Selected — declared last, highest priority ── */
-.dayActive {
-  background: var(--bg-2);
-  border-color: var(--accent);
-}
+/* ── Selected (centered under the fixed indicator) — text only, no box ── */
 .dayActive .dayLetter,
 .dayActive .dayNum { color: var(--accent) !important; font-weight: 700; }
+
+/* Selected AND over budget — red text + red center box */
+.dayActiveOver .dayLetter,
+.dayActiveOver .dayNum { color: var(--danger) !important; font-weight: 700; }
+.centerOver { border-color: var(--danger); }
 
 /* ── Disabled (outside ±10 day range) ── */
 .dayDisabled {

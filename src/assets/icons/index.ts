@@ -26,6 +26,9 @@ export { default as TrashIcon     } from './action/trash.svg?react'
 
 // ── Domain ─────────────────────────────────────────────
 export { default as DumbbellIcon  } from './domain/dumbbell.svg?react'
+export { default as BikeIcon      } from './domain/bike.svg?react'
+export { default as SportIcon     } from './domain/sport.svg?react'
+export { default as RunIcon       } from './domain/run.svg?react'
 export { default as FlameIcon     } from './domain/flame.svg?react'
 export { default as FootprintIcon } from './domain/footprint.svg?react'
 export { default as ForkIcon      } from './domain/fork.svg?react'

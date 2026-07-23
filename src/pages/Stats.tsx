@@ -72,7 +72,7 @@ export const Stats = () => {
   // net = eaten − budget over TRACKED days. Negative = deficit (under budget).
   const week = getWeekDates()
   const weekStart = formatDate(week[0])
-  const { data: burnedWeek = {} } = useQuery({
+  const { data: burnedWeek = {}, isLoading: burnedLoading } = useQuery({
     queryKey: ['burned-week', weekStart],
     queryFn: () => getBurnedWeek(weekStart, formatDate(week[6])),
   })
@@ -90,6 +90,8 @@ export const Stats = () => {
   }
   const weekExpected = weekBudget - weekBurnedBack // target × tracked days
   const weekNet = weekEaten - weekBudget // <0 = deficit
+  // Actual deficit vs maintenance (TDEE) — ignores budget/eat-back. <0 = real fat-loss deficit.
+  const weekMaintNet = weekEaten - targets.maintenance * trackedDays
 
   // Activity strip — last 7 days
   const activityDays = Array.from({ length: 7 }, (_, i) => {
@@ -180,7 +182,7 @@ export const Stats = () => {
         )}
       </header>
 
-      {isLoading ? (
+      {isLoading || burnedLoading ? (
         <div className="stack gap-12 px">
           {[100, 260, 220, 120].map(h => <SkeletonCard key={h} height={h} />)}
         </div>
@@ -224,6 +226,14 @@ export const Stats = () => {
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-mid)' }}>
                     Consumed {weekEaten.toLocaleString()}
                     <span style={{ color: 'var(--text-low)' }}> · {trackedDays}d tracked</span>
+                  </span>
+                </div>
+                <div className="stack gap-3" style={{ alignItems: 'center', marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--line)', width: '100%' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: weekMaintNet <= 0 ? 'var(--success)' : 'var(--danger)' }}>
+                    {weekMaintNet <= 0 ? '−' : '+'}{Math.abs(Math.round(weekMaintNet)).toLocaleString()} vs maintenance
+                  </span>
+                  <span className="t-micro" style={{ color: 'var(--text-low)' }}>
+                    maintenance {targets.maintenance.toLocaleString()}/d · {trackedDays}d tracked
                   </span>
                 </div>
                 {weekBurnedBack > 0 && (

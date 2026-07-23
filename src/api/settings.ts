@@ -2,6 +2,7 @@ import client from './client'
 
 export interface Settings {
   targetCalories: number
+  maintenanceCalories: number
   targetProtein: number
   targetCarbs: number
   targetFat: number
@@ -17,6 +18,7 @@ export interface Settings {
 
 const normalize = (raw: Record<string, unknown>): Settings => ({
   targetCalories: Number(raw.targetCalories ?? 1700),
+  maintenanceCalories: Number(raw.maintenanceCalories ?? 2600),
   targetProtein: Number(raw.targetProtein ?? 140),
   targetCarbs: Number(raw.targetCarbs ?? 180),
   targetFat: Number(raw.targetFat ?? 60),

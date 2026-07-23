@@ -1,5 +1,5 @@
-import { useState, useMemo, useRef } from 'react'
-import { useQueries } from '@tanstack/react-query'
+import { useState, useMemo, useRef, useEffect } from 'react'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { useLogs, useDeleteLog, useUpdateLog, logsKey } from '../hooks/useLogs'
 import { useStreak } from '../hooks/useStreak'
@@ -14,35 +14,23 @@ import { useToast } from '../components/Toast'
 import { Card } from '../components/ui/Card'
 import { Eyebrow } from '../components/ui/Eyebrow'
 import { MetricNumber } from '../components/ui/MetricNumber'
-import { SettingsIcon, MoreIcon, TrashIcon, EditIcon, StreakIcon, ChevronRightIcon, MealsIcon } from '../assets/icons'
+import { SettingsIcon, MoreIcon, TrashIcon, EditIcon, StreakIcon, MealsIcon } from '../assets/icons'
 import { sumMacros, eatBack } from '../utils/macros'
 import { today, formatDate } from '../utils/dates'
 import { getLogs, type LogEntry, type Meal } from '../api/logs'
+import { getBurnedWeek } from '../api/sync'
 import { useTodayStore } from '../store/todayStore'
 import LogoHeader from '../assets/brand/logo-header.svg?react'
 import EmptyLog from '../assets/illustrations/empty-log.svg?react'
 import styles from './Today.module.css'
 
-const DAY_LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
 const MEAL_ORDER = ['breakfast', 'lunch', 'dinner', 'other'] as const
 const MEAL_LABEL: Record<string, string> = { breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner', other: 'Other' }
 
-function getWeekDays(baseDate: Date): Date[] {
-  const dow = baseDate.getDay()
-  const mondayOffset = dow === 0 ? -6 : 1 - dow
-  const monday = new Date(baseDate)
-  monday.setDate(baseDate.getDate() + mondayOffset)
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday)
-    d.setDate(monday.getDate() + i)
-    return d
-  })
-}
 
 export const Today = () => {
   const navigate = useNavigate()
   const { selectedDate, setSelectedDate } = useTodayStore()
-  const [weekAnchor, setWeekAnchor] = useState(() => new Date(selectedDate))
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [openRowId, setOpenRowId]       = useState<string | null>(null)
   const [deletingId, setDeletingId]     = useState<string | null>(null)
@@ -59,32 +47,23 @@ export const Today = () => {
   const targets = useTargets()
   const { showToast } = useToast()
 
-  const weekDays = useMemo(() => getWeekDays(weekAnchor), [weekAnchor])
-
   const todayStr = today()
   const dateLabel = selectedDate === todayStr
     ? "Today's Log"
     : new Date(selectedDate).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
 
-  // ±10 day limits (both normalized to midnight for clean comparisons)
-  const maxPast = useMemo(() => {
-    const d = new Date(todayStr)
-    d.setDate(d.getDate() - 10)
-    d.setHours(0, 0, 0, 0)
-    return d
+  // Date slider: today ±10 days, scroll-snapped one day at a time.
+  const sliderDays = useMemo(() => {
+    const base = new Date(todayStr); base.setHours(0, 0, 0, 0)
+    return Array.from({ length: 21 }, (_, i) => {
+      const d = new Date(base); d.setDate(base.getDate() + (i - 10)); return d
+    })
   }, [todayStr])
 
-  const maxFuture = useMemo(() => {
-    const d = new Date(todayStr)
-    d.setDate(d.getDate() + 10)
-    d.setHours(0, 0, 0, 0)
-    return d
-  }, [todayStr])
-
-  // One query per visible day — same queryKey/queryFn as useLogs, so cache is shared.
-  // The selected day's data is already in cache; other days are fetched in parallel.
-  const weekQueries = useQueries({
-    queries: weekDays.map(d => ({
+  // One query per day in the window — shares cache with useLogs.
+  // ponytail: 21 tiny cached queries; trim the window if it ever bites.
+  const dayQueries = useQueries({
+    queries: sliderDays.map(d => ({
       queryKey: logsKey(formatDate(d)),
       queryFn:  () => getLogs(formatDate(d)),
       staleTime: 60_000,
@@ -93,56 +72,59 @@ export const Today = () => {
 
   const historyByDate = useMemo(() => {
     const map = new Map<string, { calories: number; protein: number }>()
-    weekDays.forEach((d, i) => {
-      const entries = weekQueries[i]?.data
+    sliderDays.forEach((d, i) => {
+      const entries = dayQueries[i]?.data
       if (entries && entries.length > 0) {
         const m = sumMacros(entries)
         map.set(formatDate(d), { calories: m.calories, protein: m.protein })
       }
     })
     return map
-  }, [weekQueries, weekDays])
+  }, [dayQueries, sliderDays])
 
-  // Navigation guards: allow going back/forward as long as the resulting week
-  // contains at least one enabled day (i.e., not the entire week is past the limit)
-  const canGoBack = useMemo(() => {
-    const d = new Date(weekDays[0])
-    d.setHours(0, 0, 0, 0)
-    return d > maxPast
-  }, [weekDays, maxPast])
+  // Center the selected day in the strip (on mount + whenever it changes).
+  const stripRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    stripRef.current
+      ?.querySelector(`[data-date="${selectedDate}"]`)
+      ?.scrollIntoView({ inline: 'center', block: 'nearest' })
+  }, [selectedDate])
 
-  const canGoForward = useMemo(() => {
-    const d = new Date(weekDays[6])
-    d.setHours(0, 0, 0, 0)
-    return d < maxFuture
-  }, [weekDays, maxFuture])
-
-  const goWeek = (delta: number) =>
-    setWeekAnchor(prev => { const n = new Date(prev); n.setDate(n.getDate() + delta * 7); return n })
-
-  // Swipe the week strip to change weeks. stopPropagation so the app-level
-  // tab-switch swipe (SwipeTabs) never fires from a strip gesture.
-  const swipe = useRef<{ x: number; y: number } | null>(null)
-  const onStripTouchStart = (e: React.TouchEvent) => {
-    const t = e.touches[0]
-    swipe.current = { x: t.clientX, y: t.clientY }
-    e.stopPropagation()
-  }
-  const onStripTouchEnd = (e: React.TouchEvent) => {
-    e.stopPropagation()
-    const s = swipe.current; swipe.current = null
-    if (!s) return
-    const t = e.changedTouches[0]
-    const dx = t.clientX - s.x, dy = t.clientY - s.y
-    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return
-    if (dx < 0 && canGoForward) goWeek(1)
-    else if (dx > 0 && canGoBack) goWeek(-1)
+  // Wheel behaviour: whichever day settles under the fixed center indicator
+  // becomes selected. tileFullWidth = 48px tile + 3px gap.
+  const scrollTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const onStripScroll = () => {
+    const el = stripRef.current
+    if (!el) return
+    clearTimeout(scrollTimer.current)
+    scrollTimer.current = setTimeout(() => {
+      const i = Math.round(el.scrollLeft / 51)
+      const clamped = Math.min(Math.max(i, 0), sliderDays.length - 1)
+      const ds = formatDate(sliderDays[clamped])
+      if (ds !== selectedDate) setSelectedDate(ds)
+    }, 90)
   }
 
-  const { data: settings } = useSettings()
-  const dayHealth = useHealthToday(!!settings?.googleHealthConnected, selectedDate).data
+  const { data: settings, isLoading: settingsLoading } = useSettings()
+  const healthQ = useHealthToday(!!settings?.googleHealthConnected, selectedDate)
+  const dayHealth = healthQ.data
   const activityBonus = eatBack(dayHealth?.caloriesBurned) // 50% of burned, eaten back
   const budget = targets.calories + activityBonus
+
+  // Burned kcal per day across the slider window → colour dots by NET calories
+  // (intake vs target+eat-back), not raw intake.
+  const winStart = formatDate(sliderDays[0])
+  const winEnd = formatDate(sliderDays[sliderDays.length - 1])
+  const { data: burnedWeek = {} } = useQuery({
+    queryKey: ['burned-week', winStart, winEnd],
+    queryFn: () => getBurnedWeek(winStart, winEnd),
+    enabled: !!settings?.googleHealthConnected,
+    staleTime: 60_000,
+  })
+  // Budget depends on burned calories — hold the ring skeleton until settings +
+  // (if connected) burned data are in, so the number never renders then jumps.
+  const budgetPending =
+    settingsLoading || (!!settings?.googleHealthConnected && healthQ.isLoading)
 
   const totals    = sumMacros(logs)
   const remaining = budget - totals.calories
@@ -203,61 +185,57 @@ export const Today = () => {
         </div>
       </header>
 
-      {/* ── Week strip (swipe to change weeks) ── */}
-      <div
-        className={styles.weekStripWrap}
-        onTouchStart={onStripTouchStart}
-        onTouchEnd={onStripTouchEnd}
-        style={{ touchAction: 'pan-y' }}
-      >
-        <button
-          className={`btn-icon ${styles.chevron}`}
-          disabled={!canGoBack}
-          onClick={() => goWeek(-1)}
-          aria-label="Previous week"
+      {/* ── Date slider (wheel: dates scroll under a fixed center indicator) ── */}
+      <div className={styles.weekStripWrap}>
+       <div className={styles.stripPill}>
+        <div className={`${styles.centerIndicator} ${isOver ? styles.centerOver : ''}`} />
+        <div
+          className={styles.weekStrip}
+          ref={stripRef}
+          onScroll={onStripScroll}
+          onTouchStart={e => e.stopPropagation()}
+          onTouchEnd={e => e.stopPropagation()}
         >
-          <ChevronRightIcon width={18} height={18} style={{ transform: 'rotate(180deg)' }} />
-        </button>
-
-        <div className={styles.weekStrip}>
-          {weekDays.map((d, i) => {
+          {sliderDays.map(d => {
             const ds = formatDate(d)
-            const dNorm = new Date(d); dNorm.setHours(0, 0, 0, 0)
             const isToday    = ds === todayStr
             const isSelected = ds === selectedDate
-            const isClickable = dNorm >= maxPast && dNorm <= maxFuture
 
             const dayData = historyByDate.get(ds)
             const hasLog  = !!dayData
-            const overCal = hasLog && dayData.calories > targets.calories
+            // Net budget = target + eaten-back activity calories for that day
+            const dayBudget = targets.calories + eatBack(burnedWeek[ds])
+            const overCal = hasLog && dayData.calories > dayBudget
 
-            // Dot: every logged day gets one. Color = protein level.
+            // Dot: every logged day gets one. Over-budget = red (matches the ring),
+            // otherwise color = protein level.
             let dotColor = ''
             if (hasLog) {
-              if (dayData.protein <= targets.protein * 0.5)       dotColor = 'var(--danger)'
+              if (overCal)                                        dotColor = 'var(--danger)'
+              else if (dayData.protein <= targets.protein * 0.5)  dotColor = 'var(--danger)'
               else if (dayData.protein <= targets.protein * 0.75) dotColor = '#E6994C'
               else                                                 dotColor = 'var(--accent)'
             }
 
             const tileClasses = [
               styles.dayTile,
-              isSelected                          ? styles.dayActive      : '',
+              isSelected && !overCal              ? styles.dayActive      : '',
+              isSelected && overCal               ? styles.dayActiveOver  : '',
               !isSelected && overCal              ? styles.dayLoggedOver  : '',
               !isSelected && hasLog && !overCal   ? styles.dayLoggedGood  : '',
               isToday                             ? styles.dayIsToday     : '',
-              !isClickable                        ? styles.dayDisabled    : '',
             ].filter(Boolean).join(' ')
 
             return (
               <button
-                key={i}
+                key={ds}
+                data-date={ds}
                 className={tileClasses}
-                disabled={!isClickable}
                 onClick={() => setSelectedDate(ds)}
                 aria-label={`${d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' })}${hasLog ? ', logged' : ''}`}
                 aria-pressed={isSelected}
               >
-                <span className={styles.dayLetter}>{DAY_LETTERS[i]}</span>
+                <span className={styles.dayLetter}>{d.toLocaleDateString('en-US', { weekday: 'narrow' })}</span>
                 <span className={styles.dayNumRow}>
                   <span className={styles.dayNum}>{d.getDate()}</span>
                   {dotColor && <span className={styles.dayDot} style={{ background: dotColor }} />}
@@ -266,20 +244,12 @@ export const Today = () => {
             )
           })}
         </div>
-
-        <button
-          className={`btn-icon ${styles.chevron}`}
-          disabled={!canGoForward}
-          onClick={() => goWeek(1)}
-          aria-label="Next week"
-        >
-          <ChevronRightIcon width={18} height={18} />
-        </button>
+       </div>
       </div>
 
       {/* ── Calorie hero card ── */}
       <div className="px">
-        {isLoading ? (
+        {isLoading || budgetPending ? (
           <Card padding={24} style={{ alignItems: 'center', display: 'flex', flexDirection: 'column', gap: 24 }}>
             <div className="skeleton-row" style={{ width: 220, height: 220, borderRadius: '50%' }} />
             <div className="row gap-16" style={{ width: '100%' }}>
@@ -313,7 +283,7 @@ export const Today = () => {
             </RingProgress>
 
             <div className="row gap-16" style={{ width: '100%' }}>
-              <MacroBar label="Protein" current={totals.protein} target={targets.protein} color="var(--protein)" />
+              <MacroBar label="Protein" current={totals.protein} target={targets.protein} color="var(--protein)" overOk />
               <MacroBar label="Carbs"   current={totals.carbs}   target={targets.carbs}   color="var(--carbs)"   />
               <MacroBar label="Fat"     current={totals.fat}     target={targets.fat}     color="var(--fat)"     />
             </div>
@@ -369,7 +339,7 @@ export const Today = () => {
                     <span className="t-micro" style={{ color: 'var(--text-low)', fontFamily: 'var(--font-mono)' }}>{kcal} kcal</span>
                   </div>
                   {items.map(entry => (
-                    <Card key={entry.id} padding={0} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 12px 12px 14px', minHeight: 64 }}>
+                    <Card key={entry.id} padding={0} onClick={() => openEdit(entry)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 12px 12px 14px', minHeight: 64, cursor: 'pointer' }}>
                       <div style={{ width: 40, height: 40, background: 'var(--bg-2)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         <RingProgress progress={entry.calories / targets.calories} size={32} strokeWidth={3}>
                           <span style={{ fontSize: 7, fontFamily: 'var(--font-mono)', color: 'var(--text-low)' }}>
@@ -388,15 +358,15 @@ export const Today = () => {
                       </div>
                       {openRowId === entry.id ? (
                         <div className="row gap-6" style={{ flexShrink: 0 }}>
-                          <button className="btn-icon" onClick={() => openEdit(entry)} aria-label="Edit">
+                          <button className="btn-icon" onClick={e => { e.stopPropagation(); openEdit(entry) }} aria-label="Edit">
                             <EditIcon width={15} height={15} />
                           </button>
-                          <button className="btn-danger" onClick={() => handleDelete(entry.id)} disabled={deletingId === entry.id} aria-label="Delete">
+                          <button className="btn-danger" onClick={e => { e.stopPropagation(); handleDelete(entry.id) }} disabled={deletingId === entry.id} aria-label="Delete">
                             <TrashIcon width={14} height={14} />
                           </button>
                         </div>
                       ) : (
-                        <button className="btn-icon" onClick={() => setOpenRowId(entry.id)}>
+                        <button className="btn-icon" onClick={e => { e.stopPropagation(); setOpenRowId(entry.id) }} aria-label="More">
                           <MoreIcon width={16} height={16} />
                         </button>
                       )}

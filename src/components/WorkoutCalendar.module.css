@@ -6,14 +6,57 @@
 
 .day {
   aspect-ratio: 1;
-  display: grid;
-  place-items: center;
-  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border-radius: 12px;
+  border: 1.5px solid transparent;
+  background: transparent;
   font-family: var(--font-mono);
   font-size: 13px;
-  transition: transform 80ms;
+  transition: transform 80ms, background 120ms, border-color 120ms;
 }
 .day:active { transform: scale(0.9); }
+.day[data-today] { border-color: var(--line); }
+.day[data-sel] { background: var(--accent-dim); border-color: var(--accent); }
+
+.dayNum { line-height: 1; }
+
+.dots {
+  display: flex;
+  gap: 3px;
+  height: 6px;
+  align-items: center;
+}
+.dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: block;
+  box-shadow: 0 0 0 0.5px rgba(0,0,0,0.35);
+}
+
+.legend {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 14px;
+}
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-low);
+  letter-spacing: 0.04em;
+}
+.legend i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
 
 .detail {
   display: flex;
